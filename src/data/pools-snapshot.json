@@ -1,47 +1,92 @@
 {
   "pools": [
     {
-      "address": "3WXA8eXp5BmuaVbUrCvfeJ6wDbj9P6cuwTtvxfigzgeC",
-      "baseMint": "An7rFrzDF8VpHpVGwgLTRha9iETKcNoZJeMDe2HFQpxY",
+      "address": "391tdXUKfp1U9pwpteTc3gLrgiBBd49iFzexMQWGjxZy",
+      "baseMint": "BKGpQYsbQBYsJzJsEny71auTbczWXuFRwSY7qcVNrSkh",
       "creator": "DyLqanrFCkmbJqrHYw4HcPLcdayzCokemUmFbf5ZsQX5",
       "config": "3mDSxat7hMmhQ41wQEyJJdufhN7j2Kd6oeNWEn8jfZF2",
-      "quoteReserve": 8.357167177,
+      "quoteReserve": 8.683038392,
       "migrationQuoteThreshold": 11.53,
-      "progressPct": 72.48193562012142,
+      "progressPct": 75.30822542931483,
       "isMigrated": false,
-      "baseReserve": 938310141.211718,
-      "quoteVault": "5KNvsYTqmTL8vpGRVm1u9YhNA4FR31s3aHKL28ViZofT",
-      "activationPoint": 451983247
+      "baseReserve": 937168177.214225,
+      "quoteVault": "96rgKKrH6kLBrebnQgQu2NKLn264aoMmT7uPCxUH2qra",
+      "activationPoint": 451983760,
+      "design": {
+        "name": "Live pool 391tdX…jxZy",
+        "description": "Reconstructed from the on-chain config of pool 391tdXUKfp1U9pwpteTc3gLrgiBBd49iFzexMQWGjxZy (creator DyLqanrF…, 75% of its raise at snapshot time). Market caps, supply and the liquidity split are exact; the fee schedule is modelled as a flat 0.25% because the program packs a decaying schedule into the config account.",
+        "quoteAsset": "SOL",
+        "totalSupply": 1000000000,
+        "initialMarketCap": 65.60601906562421,
+        "migrationMarketCap": 400.00000000000006,
+        "percentageSupplyOnMigration": 3,
+        "feeMode": "linear",
+        "feeSchedule": {
+          "startingFeeBps": 25,
+          "endingFeeBps": 25,
+          "numberOfPeriods": 0,
+          "totalDurationSec": 0
+        },
+        "dynamicFee": {
+          "enabled": false
+        },
+        "collectFeeMode": "quote",
+        "migrationTarget": "dammV2",
+        "migrationFeePreset": 600,
+        "creatorTradingFeePercentage": 0,
+        "liquidityDistribution": {
+          "partnerLiquidityPercentage": 0,
+          "partnerPermanentLockedLiquidityPercentage": 0,
+          "creatorLiquidityPercentage": 89,
+          "creatorPermanentLockedLiquidityPercentage": 0
+        }
+      }
     },
     {
-      "address": "JBSLbA734jVJKaHKC8LFxSqM9ugx4EnghteDQtohR8PH",
-      "baseMint": "7r1v5rZcGnyzVs1jei7FeMEiZVf4GhQgLYXjZHmMUDGQ",
-      "creator": "96C4WqmAHudb2nXPsg3A92j8J1eUiMg93ePBkLw1LvBN",
-      "config": "6G3dqSqQ8cq8b7uK3cZiDrbTGBoMcroFMTmVHDq8Kx7d",
-      "quoteReserve": 34.559083923,
-      "migrationQuoteThreshold": 99,
-      "progressPct": 34.90816557878788,
+      "address": "BuEPDFVTtQkcsXJ5VW9Vr9Yqoa4cKLJzine1d13tRhGL",
+      "baseMint": "4sN2QiT1qeN6QmQP8zTWSrNAn3qMV82Px4TEtytJ3X2a",
+      "creator": "AkW5qYsY1BawNP6NDufvpz6hds12W9SWAg3W8jDLWQZb",
+      "config": "6m7XSKNZtiMz3yXfAk8QK5dejQb4aMHjc4bQrqi8h4VD",
+      "quoteReserve": 8.256950364,
+      "migrationQuoteThreshold": 10.95,
+      "progressPct": 75.40593939726028,
       "isMigrated": false,
-      "baseReserve": 454358762.395299,
-      "quoteVault": "DhWCA6pvVuN9zosZxZP4eY8MQeAJni7U1meBUyQ7U9KC",
-      "activationPoint": 1790768546
-    },
-    {
-      "address": "HiatBk3MczMUxnsNBhYQRrTtx53Pex73tspswJURktDn",
-      "baseMint": "7T9jcgTmkKKmqFmr6vwA2V3G2mD7DadjhZEkurmY8zN1",
-      "creator": "xzy19tqTk3gA956Lz8na4C4mes2SPPLd7whqmPFx9Td",
-      "config": "2toDxUnvDSdWz9QV2N7PTGvs9UaEoCdbznLux88mH4cY",
-      "quoteReserve": 11.51,
-      "migrationQuoteThreshold": 11.51,
-      "progressPct": 100,
-      "isMigrated": true,
-      "baseReserve": 928073172.401352,
-      "quoteVault": "5j9c84bWaNHyWR2b4vuYjMKoUKZ5j8wyxFKexn4nibKC",
-      "activationPoint": 451983026
+      "baseReserve": 977595143.73468,
+      "quoteVault": "6tsMuPsMvmfekN5LZUnyRLz6HiSsn31G3md7KLQ6Xyre",
+      "activationPoint": 451983873,
+      "design": {
+        "name": "Live pool BuEPDF…RhGL",
+        "description": "Reconstructed from the on-chain config of pool BuEPDFVTtQkcsXJ5VW9Vr9Yqoa4cKLJzine1d13tRhGL (creator AkW5qYsY…, 75% of its raise at snapshot time). Market caps, supply and the liquidity split are exact; the fee schedule is modelled as a flat 0.25% because the program packs a decaying schedule into the config account.",
+        "quoteAsset": "SOL",
+        "totalSupply": 1000000000,
+        "initialMarketCap": 303.7005722847673,
+        "migrationMarketCap": 500,
+        "percentageSupplyOnMigration": 2,
+        "feeMode": "linear",
+        "feeSchedule": {
+          "startingFeeBps": 25,
+          "endingFeeBps": 25,
+          "numberOfPeriods": 0,
+          "totalDurationSec": 0
+        },
+        "dynamicFee": {
+          "enabled": false
+        },
+        "collectFeeMode": "quote",
+        "migrationTarget": "dammV2",
+        "migrationFeePreset": 600,
+        "creatorTradingFeePercentage": 0,
+        "liquidityDistribution": {
+          "partnerLiquidityPercentage": 0,
+          "partnerPermanentLockedLiquidityPercentage": 0,
+          "creatorLiquidityPercentage": 89,
+          "creatorPermanentLockedLiquidityPercentage": 0
+        }
+      }
     }
   ],
   "scannedTransactions": 16,
   "endpoint": "https://api.mainnet-beta.solana.com",
   "provider": "Custom endpoint",
-  "fetchedAt": "2026-09-30T13:52:45.869Z"
+  "fetchedAt": "2026-09-30T13:54:32.959Z"
 }

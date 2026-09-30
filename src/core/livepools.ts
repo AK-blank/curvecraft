@@ -24,6 +24,7 @@ import {
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 
 import { redactEndpoint, resolveRpcProvider } from './providers';
+import type { LaunchSpec } from './types';
 
 const QUOTE_DECIMALS = 9; // SOL-quoted launches dominate DBC today.
 
@@ -44,6 +45,20 @@ const IGNORED_ACCOUNTS = new Set([
   DYNAMIC_BONDING_CURVE_PROGRAM_ID,
 ]);
 
+const WRAPPED_SOL = 'So11111111111111111111111111111111111111112';
+const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+/** Reverse of the preset -> enum map in `build.ts`. */
+const MIGRATION_FEE_PRESETS: Record<number, LaunchSpec['migrationFeePreset']> = {
+  0: 25,
+  1: 30,
+  2: 100, // the on-chain enum has a 50 bps option the studio presets do not offer
+  3: 100,
+  4: 200,
+  5: 400,
+  6: 600,
+};
+
 export interface LivePool {
   address: string;
   baseMint: string;
@@ -59,6 +74,8 @@ export interface LivePool {
   baseReserve: number;
   quoteVault: string;
   activationPoint: number | null;
+  /** A launch spec reconstructed from this pool's on-chain config. */
+  design?: LaunchSpec;
 }
 
 export interface LivePoolsSnapshot {
@@ -94,6 +111,105 @@ interface PoolState {
 
 interface ConfigState {
   migrationQuoteThreshold?: { toString(): string };
+  migrationSqrtPrice?: { toString(): string };
+  sqrtStartPrice?: { toString(): string };
+  preMigrationTokenSupply?: { toString(): string };
+  migrationBaseThreshold?: { toString(): string };
+  tokenDecimal?: number;
+  quoteMint?: { toBase58(): string };
+  collectFeeMode?: number;
+  migrationOption?: number;
+  migrationFeeOption?: number;
+  creatorTradingFeePercentage?: number;
+  creatorLiquidityPercentage?: number;
+  creatorPermanentLockedLiquidityPercentage?: number;
+  partnerLiquidityPercentage?: number;
+  partnerPermanentLockedLiquidityPercentage?: number;
+  poolFees?: { baseFee?: { cliffFeeNumerator?: { toString(): string } } };
+}
+
+const Q64 = 2 ** 64;
+
+function num(value: unknown): number {
+  if (value === undefined || value === null) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'object' && 'toString' in (value as object)) {
+    return Number((value as { toString(): string }).toString());
+  }
+  return Number(value);
+}
+
+/**
+ * Rebuild a studio design from a live pool's config account.
+ *
+ * Market caps, supply and the liquidity split are exact — they are read straight
+ * off the config. The fee schedule is the one approximation: the program packs a
+ * decaying schedule into `cliffFeeNumerator`/`secondFactor`/`thirdFactor`, so we
+ * take the *current* base fee and model it as flat. The returned spec says so in
+ * its description, which travels with the design into the studio and the report.
+ */
+export function specFromPoolConfig(
+  config: ConfigState,
+  pool: { address: string; creator: string; progressPct: number },
+): LaunchSpec | null {
+  const quoteMint = config.quoteMint?.toBase58?.() ?? WRAPPED_SOL;
+  const quoteAsset = quoteMint === USDC_MINT ? 'USDC' : 'SOL';
+  const quoteDecimals = quoteAsset === 'USDC' ? 6 : 9;
+  const baseDecimals = config.tokenDecimal ?? 6;
+
+  const rawSupply = num(config.preMigrationTokenSupply);
+  if (!rawSupply) return null;
+  const totalSupply = rawSupply / 10 ** baseDecimals;
+
+  const sqrtStart = num(config.sqrtStartPrice) / Q64;
+  const sqrtMigration = num(config.migrationSqrtPrice) / Q64;
+  if (!sqrtStart || !sqrtMigration) return null;
+
+  const startPrice = sqrtStart ** 2 / 10 ** (quoteDecimals - 6);
+  const migrationPrice = sqrtMigration ** 2 / 10 ** (quoteDecimals - 6);
+
+  const migrationBase = num(config.migrationBaseThreshold) || totalSupply * 0.2;
+  const percentageSupplyOnMigration = Math.min(
+    95,
+    Math.max(1, Math.round((migrationBase / rawSupply) * 100)),
+  );
+
+  const feeBps = Math.max(
+    1,
+    Math.round(num(config.poolFees?.baseFee?.cliffFeeNumerator) / 1e5) || 100,
+  );
+
+  const spec: LaunchSpec = {
+    name: `Live pool ${pool.address.slice(0, 6)}…${pool.address.slice(-4)}`,
+    description: `Reconstructed from the on-chain config of pool ${pool.address} (creator ${pool.creator.slice(0, 8)}…, ${pool.progressPct.toFixed(0)}% of its raise at snapshot time). Start and graduation market cap, supply and the current on-chain base fee are exact; the fee schedule is modelled as a flat ${(feeBps / 100).toFixed(2)}% because the program packs a decaying schedule into the config account, and rebuilding the curve through those two prices will not reproduce the original segment layout byte for byte.`,
+    quoteAsset,
+    totalSupply,
+    initialMarketCap: startPrice * totalSupply,
+    migrationMarketCap: migrationPrice * totalSupply,
+    percentageSupplyOnMigration,
+    feeMode: 'linear',
+    feeSchedule: {
+      startingFeeBps: feeBps,
+      endingFeeBps: feeBps,
+      numberOfPeriods: 0,
+      totalDurationSec: 0,
+    },
+    dynamicFee: { enabled: false },
+    collectFeeMode: config.collectFeeMode === 0 ? 'output' : 'quote',
+    migrationTarget: config.migrationOption === 1 ? 'dammV2' : 'dammV1',
+    migrationFeePreset: MIGRATION_FEE_PRESETS[config.migrationFeeOption ?? 3] ?? 100,
+    creatorTradingFeePercentage: config.creatorTradingFeePercentage ?? 0,
+    liquidityDistribution: {
+      partnerLiquidityPercentage: config.partnerLiquidityPercentage ?? 0,
+      partnerPermanentLockedLiquidityPercentage:
+        config.partnerPermanentLockedLiquidityPercentage ?? 0,
+      creatorLiquidityPercentage: config.creatorLiquidityPercentage ?? 100,
+      creatorPermanentLockedLiquidityPercentage:
+        config.creatorPermanentLockedLiquidityPercentage ?? 0,
+    },
+  };
+
+  return spec;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -168,12 +284,20 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
     if (!poolState?.quoteReserve) continue;
 
     let threshold = 0;
+    let design: LaunchSpec | undefined;
     try {
       const configAddress = poolState.config?.toBase58();
       if (configAddress) {
         const config = (await client.state.getPoolConfig(configAddress)) as unknown as ConfigState;
         threshold =
           Number(config?.migrationQuoteThreshold?.toString() ?? 0) / 10 ** QUOTE_DECIMALS;
+        const progressPct = threshold > 0 ? (Number(poolState.quoteReserve.toString()) / 10 ** QUOTE_DECIMALS / threshold) * 100 : 0;
+        design =
+          specFromPoolConfig(config, {
+            address,
+            creator: poolState.creator?.toBase58() ?? 'unknown',
+            progressPct,
+          }) ?? undefined;
       }
     } catch {
       /* the threshold is a nicety; progress falls back to zero */
@@ -196,6 +320,7 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
       baseReserve: Number(poolState.baseReserve?.toString() ?? 0) / 1e6,
       quoteVault: poolState.quoteVault?.toBase58() ?? 'unknown',
       activationPoint,
+      design,
     });
   }
 

@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import snapshot from '@/data/pools-snapshot.json';
 import type { LivePoolsSnapshot } from '@/core/livepools';
+import { specLink } from '@/core/share';
 
 export const metadata: Metadata = {
   title: 'Live DBC launches — CurveCraft',
@@ -139,6 +140,21 @@ export default function PoolsPage() {
                 </span>
                 {pool.isMigrated && <span className="text-emerald-400">migrated</span>}
               </div>
+
+              {pool.design && (
+                <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-800 pt-3">
+                  <Link
+                    href={specLink(pool.design, '/studio')}
+                    className="rounded-lg border border-violet-500/60 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:bg-violet-500/10"
+                  >
+                    Fork this design in the studio →
+                  </Link>
+                  <span className="font-mono text-[11px] text-slate-500">
+                    {compact(pool.design.initialMarketCap)} → {compact(pool.design.migrationMarketCap)}{' '}
+                    SOL market cap · {(pool.design.totalSupply / 1e6).toFixed(0)}M supply
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>

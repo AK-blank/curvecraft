@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { deriveSpec, toConfigParams } from '@/core/build';
 import { analyze, analyzeMonteCarlo } from '@/core/analysis';
 import { toCreateConfigScript } from '@/core/codegen';
+import { specFromPoolConfig } from '@/core/livepools';
 import { redactEndpoint, resolveRpcProvider } from '@/core/providers';
 import { toLaunchReport } from '@/core/report';
 import { lintSpec } from '@/core/lint';
@@ -436,5 +437,57 @@ describe('rpc provider resolution', () => {
       'secret123',
     );
     expect(redactEndpoint('https://user:pass@x.test/rpc')).not.toContain('pass');
+  });
+});
+
+describe('rebuilding a design from a live pool', () => {
+  const config = {
+    quoteMint: { toBase58: () => 'So11111111111111111111111111111111111111112' },
+    tokenDecimal: 6,
+    preMigrationTokenSupply: { toString: () => '1000000000000000' },
+    // sqrt prices as Q64.64 over raw units
+    sqrtStartPrice: { toString: () => '149414093886456435' },
+    migrationSqrtPrice: { toString: () => '368934881474191032' },
+    migrationBaseThreshold: { toString: () => '30000000000000' },
+    poolFees: { baseFee: { cliffFeeNumerator: { toString: () => '2500000' } } },
+    collectFeeMode: 1,
+    migrationOption: 1,
+    migrationFeeOption: 3,
+    creatorTradingFeePercentage: 0,
+    creatorLiquidityPercentage: 89,
+    creatorPermanentLockedLiquidityPercentage: 0,
+    partnerLiquidityPercentage: 0,
+    partnerPermanentLockedLiquidityPercentage: 0,
+  };
+
+  it('recovers the market caps and supply from the config account', () => {
+    const spec = specFromPoolConfig(config, {
+      address: 'Pool1111111111111111111111111111111111111111',
+      creator: 'Creator111111111111111111111111111111111111',
+      progressPct: 75,
+    });
+
+    expect(spec).not.toBeNull();
+    expect(spec!.totalSupply).toBe(1_000_000_000);
+    expect(spec!.initialMarketCap).toBeCloseTo(65.61, 1);
+    expect(spec!.migrationMarketCap).toBeCloseTo(400, 0);
+    expect(spec!.feeSchedule.startingFeeBps).toBe(25);
+    expect(spec!.quoteAsset).toBe('SOL');
+    // The provenance travels with the design so the studio can show it.
+    expect(spec!.description).toContain('Reconstructed from the on-chain config');
+  });
+
+  it('compiles the rebuilt design without throwing', () => {
+    const spec = specFromPoolConfig(config, {
+      address: 'Pool1111111111111111111111111111111111111111',
+      creator: 'Creator111111111111111111111111111111111111',
+      progressPct: 10,
+    })!;
+    const derived = deriveSpec(spec, toConfigParams(spec));
+    expect(derived.migrationQuoteThreshold).toBeGreaterThan(0);
+  });
+
+  it('returns null rather than guessing when the config is incomplete', () => {
+    expect(specFromPoolConfig({}, { address: 'x', creator: 'y', progressPct: 0 })).toBeNull();
   });
 });
