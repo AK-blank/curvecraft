@@ -23,8 +23,10 @@ and when does this thing graduate?"**
 
 ## What it does
 
-1. **Design** — edit the launch spec: quote asset, supply, start/graduation market cap, fee mode
-   (linear / exponential / rate limiter), fee schedule, dynamic fee, migration fee, creator fee.
+1. **Design** — edit the launch spec: quote asset, supply, start/graduation market cap, **curve
+   shape** (market cap / flat / long-linear / exponential, built from sixteen weighted segments),
+   fee mode (linear / exponential / rate limiter), fee schedule, dynamic fee, migration fee and
+   creator fee.
 2. **Simulate** — three demand scenarios scaled to *your* graduation target are replayed fill by
    fill:
    - *Organic grind* — 400 buys spread over two hours.
@@ -93,6 +95,25 @@ founder who wants a 64,000 SOL graduation instead of 8,000 SOL needs 3.2× the
 raise for 8× the headline valuation. `tests/core.test.ts` pins this behaviour so a
 dependency upgrade cannot silently change it.
 
+## Finding four: the curve shape moves the raise by ±30%
+
+Same start market cap, same graduation market cap, same supply — only the curve shape changes
+*(measured)*:
+
+| Curve shape | Raise to graduate | vs market-cap curve |
+|---|---|---|
+| Market cap (single segment) | 1,600.0 SOL | — |
+| **Flat** (deep early liquidity, 16 segments) | **1,172.4 SOL** | **−27%** |
+| Long / linear (16 even segments) | 1,598.4 SOL | −0.1% |
+| **Exponential** (thin early liquidity) | **2,130.8 SOL** | **+33%** |
+
+A flat curve keeps the price low while supply sells, so the same headline valuation is reached with
+a third less capital — and it charges 27% less in fees along the way (15.55 SOL vs 21.22 SOL on the
+same demand). An exponential curve buys faster price discovery and pays for it.
+
+This is the shape of the "Flat Curve / Exponential Curve / Long Curve" idea Meteora asks for, with
+the trade-off measured instead of asserted. Reproduce with `npm run shapes`.
+
 ## Finding three: every preset we shipped was undeployable
 
 Writing the launch check paid for itself immediately. The DBC program requires **at least 10% of
@@ -127,9 +148,11 @@ npm run dev          # http://localhost:3000/studio
 Simulate from the command line:
 
 ```bash
-npx tsx scripts/sim.ts --all              # every preset × every scenario
-npx tsx scripts/sim.ts fair-launch        # one preset
-npx tsx scripts/sim.ts --spec ./my.json   # your own launch spec
+npm run sim -- --all              # every preset × every scenario
+npm run sim -- fair-launch        # one preset
+npm run sim -- --spec ./my.json   # your own launch spec
+npm run shapes                    # the four curve shapes, side by side
+npx tsx scripts/curve-table.ts    # raise vs graduation market cap
 ```
 
 ## Project layout

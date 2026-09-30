@@ -52,9 +52,23 @@ export interface DynamicFeeConfig {
   maxFeeBps?: number;
 }
 
+/**
+ * How the bonding curve is shaped between the start and graduation price.
+ *
+ * - `marketCap`  — the SDK's single-segment curve derived from two market caps.
+ * - `flat`       — 16 segments weighted towards deep liquidity early: supply sells
+ *                  with little price movement, then accelerates into graduation.
+ * - `linear`     — 16 evenly weighted segments (a long, uniform curve).
+ * - `exponential`— 16 segments weighted towards late liquidity: price moves early,
+ *                  then flattens as the curve approaches graduation.
+ */
+export type CurveShape = 'marketCap' | 'flat' | 'linear' | 'exponential';
+
 export interface LaunchSpec {
   /** Display name, used in presets and exports. */
   name: string;
+  /** Curve shape; defaults to the SDK's market-cap curve. */
+  curveShape?: CurveShape;
   /** Short human note about what this launch is for. */
   description?: string;
 

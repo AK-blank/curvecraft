@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "sim": "tsx scripts/sim.ts",
-    "pools": "tsx scripts/live-pools.ts"
+    "pools": "tsx scripts/live-pools.ts",
+    "shapes": "tsx scripts/curve-shapes.ts"
   },
   "dependencies": {
     "@meteora-ag/dynamic-bonding-curve-sdk": "^1.5.13",

@@ -243,3 +243,39 @@ describe('launch lint', () => {
     expect(result.items.some((item) => item.id === 'sniper-window')).toBe(true);
   });
 });
+
+describe('curve shapes', () => {
+  it('compiles, lints and simulates every shape', () => {
+    for (const shape of ['marketCap', 'flat', 'linear', 'exponential'] as const) {
+      const spec = withSpec({ curveShape: shape });
+      const config = toConfigParams(spec);
+      const derived = deriveSpec(spec, config);
+      const lint = lintSpec(spec);
+
+      expect(derived.migrationQuoteThreshold, shape).toBeGreaterThan(0);
+      expect(lint.ok, `${shape} failed lint`).toBe(true);
+
+      const [organic] = scaledScenarios(derived.migrationQuoteThreshold);
+      expect(simulate(spec, organic).fills.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('charges a different raise for the same market caps', () => {
+    // The raise is not a function of the market caps alone: curve shape moves it
+    // by roughly +/-30%, which is the whole point of shipping shape presets.
+    const raise = (shape: 'marketCap' | 'flat' | 'exponential') => {
+      const spec = withSpec({ curveShape: shape });
+      return deriveSpec(spec, toConfigParams(spec)).migrationQuoteThreshold;
+    };
+
+    const market = raise('marketCap');
+    expect(raise('flat')).toBeLessThan(market * 0.85);
+    expect(raise('exponential')).toBeGreaterThan(market * 1.15);
+  });
+
+  it('builds sixteen segments for weighted shapes', () => {
+    const spec = withSpec({ curveShape: 'flat' });
+    const config = toConfigParams(spec) as unknown as { curve: unknown[] };
+    expect(config.curve.length).toBe(16);
+  });
+});

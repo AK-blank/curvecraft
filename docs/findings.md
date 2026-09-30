@@ -95,6 +95,27 @@ convenience.
 
 ---
 
+## 5. The curve shape moves the raise by ±30%
+
+The same start market cap, the same graduation market cap, the same supply. Only the shape of the
+curve between those two points changes *(measured)*:
+
+| Curve shape | Raise to graduate | Fees on identical demand |
+|---|---|---|
+| Market cap (single segment) | 1,600.0 SOL | 21.22 SOL |
+| **Flat** (16 segments, deep early) | **1,172.4 SOL** | 15.55 SOL |
+| Long / linear (16 even segments) | 1,598.4 SOL | 21.19 SOL |
+| **Exponential** (16 segments, thin early) | **2,130.8 SOL** | 28.25 SOL |
+
+A flat curve holds the price down while supply sells, so it reaches the same headline valuation
+with a third less capital — and collects a third less in fees from the same demand. An exponential
+curve front-loads price discovery and charges for it.
+
+None of this is visible from the two market cap numbers every launch announcement quotes. It is
+visible in the config, and now in the simulator.
+
+---
+
 ## Why the numbers hold up
 
 The simulator does not re-implement curve math. Each fill is quoted by

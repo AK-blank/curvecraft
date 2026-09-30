@@ -16,6 +16,7 @@ import {
 const COMPARE_COLORS = ['#22d3ee', '#f472b6', '#facc15'];
 
 import { toCreateConfigScript } from '@/core/codegen';
+import { CURVE_SHAPE_LABELS } from '@/core/build';
 import { PRESETS } from '@/core/presets';
 import { encodeSpec } from '@/core/share';
 import type {
@@ -332,6 +333,38 @@ export default function StudioClient({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <div>
+                  <label className={LABEL}>Curve shape</label>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        ['marketCap', 'Market cap'],
+                        ['flat', 'Flat'],
+                        ['linear', 'Long / linear'],
+                        ['exponential', 'Exponential'],
+                      ] as const
+                    ).map(([shape, label]) => (
+                      <button
+                        key={shape}
+                        onClick={() => update('curveShape', shape)}
+                        title={CURVE_SHAPE_LABELS[shape]}
+                        className={`rounded-lg border px-2 py-2 text-xs transition ${
+                          (spec.curveShape ?? 'marketCap') === shape
+                            ? 'border-violet-500 bg-violet-500/10 text-violet-200'
+                            : 'border-slate-700 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                    {(spec.curveShape ?? 'marketCap') === 'marketCap'
+                      ? 'One segment derived from the two market caps.'
+                      : '16 segments weighted so the price moves differently on the way to graduation — the same market caps need a different raise.'}
+                  </p>
+                </div>
+
                 <label className={LABEL}>Total supply</label>
                 <input
                   className={`${INPUT} mt-1`}

@@ -14,6 +14,7 @@ import {
   TokenAuthorityOption,
   TokenDecimal,
   TokenType,
+  buildCurveWithLiquidityWeights,
   buildCurveWithMarketCap,
   buildCurveWithTwoSegments,
   type ConfigParameters,
@@ -104,7 +105,10 @@ export function toConfigParams(
       tokenQuoteDecimal: quoteDecimals(spec),
       tokenAuthorityOption: TokenAuthorityOption.CreatorUpdateAuthority,
       totalTokenSupply: spec.totalSupply,
-      leftover: 0,
+      // The weights-based curve builders size the curve first and then check that
+      // the leftover buffer covers any supply delta, so they need a non-zero
+      // value. 0.1% of supply is the smallest buffer that always satisfies it.
+      leftover: leftoverFor(spec),
     },
     fee: {
       baseFeeParams: baseFeeParams(spec),
@@ -150,7 +154,52 @@ export function toConfigParams(
     } as never);
   }
 
+  const shape = spec.curveShape ?? 'marketCap';
+  if (shape !== 'marketCap') {
+    return buildCurveWithLiquidityWeights({
+      ...common,
+      initialMarketCap: spec.initialMarketCap,
+      migrationMarketCap: spec.migrationMarketCap,
+      liquidityWeights: liquidityWeightsFor(shape),
+    } as never);
+  }
+
   return buildCurveWithMarketCap(common as never);
+}
+
+/** Supply buffer the SDK requires when the curve shape is pre-sized. */
+export function leftoverFor(spec: LaunchSpec): number {
+  const shape = spec.curveShape ?? 'marketCap';
+  if (shape === 'marketCap') return 0;
+  return Math.max(1, Math.round(spec.totalSupply * 0.001));
+}
+
+export const CURVE_SHAPE_LABELS: Record<string, string> = {
+  marketCap: 'Market cap (single segment)',
+  flat: 'Flat — deep early liquidity',
+  linear: 'Linear — long, even curve',
+  exponential: 'Exponential — fast early price move',
+};
+
+/**
+ * 16 liquidity weights, one per segment.
+ *
+ * Only relative size matters: the SDK normalises them so the curve sells exactly
+ * the configured supply between the start and graduation price. A weight is how
+ * deep a segment's liquidity is, so front-loading weight keeps the price flat
+ * while supply sells, and back-loading it lets the price run early.
+ */
+export function liquidityWeightsFor(shape: Exclude<LaunchSpec['curveShape'], undefined>): number[] {
+  const segments = 16;
+  if (shape === 'flat') {
+    // Deep early: the first segment is 8x the last.
+    return Array.from({ length: segments }, (_, i) => 1 + ((segments - 1 - i) / (segments - 1)) * 7);
+  }
+  if (shape === 'exponential') {
+    // Thin early, deep late: price discovers quickly, then settles.
+    return Array.from({ length: segments }, (_, i) => 1 + (i / (segments - 1)) * 7);
+  }
+  return Array.from({ length: segments }, () => 1);
 }
 
 /** Readable view of the compiled curve checkpoints. */
