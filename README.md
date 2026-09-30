@@ -11,6 +11,11 @@ with the official Meteora swap math, and hands you a runnable launch script.
 Built for the [Colosseum Crypto World's Fair](https://www.colosseum.com/worldsfair) hackathon —
 Meteora DBC sidetrack.
 
+![CurveCraft Studio](docs/studio.png)
+
+*The studio after replaying a launch: raise to graduate, market-cap path with the graduation line,
+scenario scoreboard with the sniper premium, and the pre-deploy check.*
+
 ---
 
 ## Why this exists
