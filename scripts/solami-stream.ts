@@ -27,15 +27,18 @@ import {
 const QUOTE_DECIMALS = 9;
 
 async function enumeratePools(): Promise<void> {
-  const found = await discoverPoolsViaSolami({ limit: 48, includeTransferHook: true });
+  // Enumerate with the same cap the snapshot uses, then decode only the first
+  // few: the point of this mode is to show how much the endpoint can see.
+  const found = await discoverPoolsViaSolami({ limit: 512, includeTransferHook: true });
   console.log(
     `getProgramAccountsV2 → ${found.addresses.length} VirtualPool accounts` +
-      ` (server sent ${found.scanned} rows${found.truncated ? ', truncated by our limit' : ''})`,
+      ` (server sent ${found.scanned} rows${found.truncated ? ', capped by our limit' : ''})`,
   );
 
   const connection = await solamiConnection();
   const client = DynamicBondingCurveClient.create(connection, 'confirmed');
 
+  console.log(`decoding the first 8 of ${found.addresses.length}:`);
   let shown = 0;
   for (const address of found.addresses) {
     if (shown >= 8) break;

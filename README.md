@@ -198,6 +198,44 @@ npm run shapes                    # the four curve shapes, side by side
 npx tsx scripts/curve-table.ts    # raise vs graduation market cap
 ```
 
+## Reading mainnet: the Solami data path
+
+The live-pool view is not a mock. It is built by asking an endpoint for the
+Dynamic Bonding Curve program's pools and decoding them with the Meteora SDK.
+Where that question is asked is the difference between seeing twelve pools and
+seeing all of them:
+
+| Path | What it can see | Why |
+|---|---|---|
+| A public RPC | pools that happened to trade inside the last few blocks | public endpoints refuse `getProgramAccounts` on the program, so the reader walks recent transactions and keeps whichever accounts carry a pool discriminator |
+| [Solami](https://solami.dev) | the pools themselves | `getProgramAccountsV2` filters server-side on the discriminator and the 424-byte account size, so the enumeration is the program's live state rather than a sample of its traffic |
+
+The same client carries Solami's Yellowstone gRPC firehose, which can watch the
+program in real time instead of polling.
+
+### Running it against your own key
+
+```bash
+# one scoped Solami key covers RPC, gRPC and the data APIs
+echo 'SOLAMI_RPC_TOKEN=your_token' > .env.local
+
+npm run solami:pools        # enumerate live VirtualPool accounts
+npm run solami:stream 60    # follow DBC transactions for 60 seconds
+npm run pools:snapshot      # rebuild src/data/pools-snapshot.json
+npm run dev                 # /pools shows which path produced the snapshot
+```
+
+`SOLAMI_RPC_URL`, `RPC_FAST_URL`, `RPC_FAST_API_KEY`, `SOLANA_RPC_URL` and
+`RPC_URL` are also honoured, in that order — see
+[`src/core/providers.ts`](src/core/providers.ts). **With no key at all
+everything still runs**: the reader falls back to the transaction walk and the
+stream reports itself unavailable rather than pretending.
+
+Measured on 2026-10-01: the enumeration returned **576 VirtualPool accounts**
+(capped) where the transaction walk surfaced about ten. The deployed site
+records which path built its snapshot — see
+<https://ak-blank.github.io/curvecraft/pools/>.
+
 ## Project layout
 
 ```
@@ -212,7 +250,9 @@ src/app/studio          the studio UI
 src/app/pools           live mainnet pool snapshot view
 src/core/lint.ts        pre-deploy checks using the program's own validators
 src/core/livepools.ts   reads recent DBC pools from mainnet
+src/core/solami-source.ts  filtered mainnet pool enumeration + gRPC stream
 scripts/sim.ts          CLI
+scripts/solami-stream.ts  npm run solami:pools | solami:stream
 ```
 
 ## Documentation
