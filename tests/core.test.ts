@@ -8,7 +8,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { deriveSpec, toConfigParams } from '@/core/build';
+import { analyze, analyzeMonteCarlo } from '@/core/analysis';
 import { toCreateConfigScript } from '@/core/codegen';
+import { toLaunchReport } from '@/core/report';
 import { lintSpec } from '@/core/lint';
 import { monteCarlo } from '@/core/montecarlo';
 import { PRESETS, getPreset } from '@/core/presets';
@@ -350,5 +352,50 @@ describe('mainnet-facing guarantees', () => {
     expect(
       lintSpec(naive).items.some((item) => item.id === 'locked-liquidity' && item.level === 'error'),
     ).toBe(true);
+  });
+});
+
+describe('launch report', () => {
+  it('renders every section with real numbers', () => {
+    const analysis = analyze(fairLaunch);
+    const monteCarlo = analyzeMonteCarlo(fairLaunch, { runs: 12, seed: 3 }).result;
+    const report = toLaunchReport({ spec: fairLaunch, analysis, monteCarlo });
+
+    expect(report).toContain('# Fair Launch — launch report');
+    expect(report).toContain('## The launch');
+    expect(report).toContain('## Pre-deploy check');
+    expect(report).toContain('## How it behaves under demand');
+    expect(report).toContain('## Graduation odds');
+    expect(report).toContain('## Launch script');
+    // The raise figure must be the compiled one, not a copy of the market cap.
+    expect(report).toMatch(/Raise to graduate \| \*\*[\d.]+k? SOL\*\*/);
+    expect(analysis.derived.migrationQuoteThreshold).toBeGreaterThan(0);
+    expect(report).toContain('Graduation probability:');
+    expect(report).not.toContain('NaN');
+    expect(report).not.toContain('undefined');
+  });
+
+  it('renders for every preset and every curve shape', () => {
+    for (const preset of PRESETS) {
+      for (const shape of ['marketCap', 'flat', 'exponential'] as const) {
+        const spec = { ...structuredClone(preset.spec), curveShape: shape };
+        const report = toLaunchReport({ spec, analysis: analyze(spec), monteCarlo: null });
+        expect(report.length, `${preset.name}/${shape}`).toBeGreaterThan(800);
+        expect(report).not.toContain('NaN');
+      }
+    }
+  });
+
+  it('states the pre-deploy verdict rather than burying it', () => {
+    const broken = withSpec({
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 100,
+        creatorPermanentLockedLiquidityPercentage: 0,
+      },
+    });
+    const report = toLaunchReport({ spec: broken, analysis: analyze(broken), monteCarlo: null });
+    expect(report).toContain('cannot be deployed yet');
   });
 });

@@ -32,6 +32,8 @@ interface ComparisonRun {
   runs: SimulationResult[];
 }
 
+import type { MonteCarloResult } from '@/core/montecarlo';
+
 interface LintItem {
   id: string;
   level: 'error' | 'warning' | 'pass';
@@ -50,17 +52,7 @@ interface SimulateResponse {
 
 interface MonteCarloResponse {
   derived: SpecDerivedLike;
-  result: {
-    runs: number;
-    graduated: number;
-    graduationProbability: number;
-    graduationTimeP50: number | null;
-    fees: { p10: number; p50: number; p90: number };
-    peakMarketCap: { p10: number; p50: number; p90: number };
-    feeRate: { p10: number; p50: number; p90: number };
-    histogram: Array<{ bucket: number; count: number }>;
-    meanFills: number;
-  };
+  result: MonteCarloResult;
 }
 
 type NumericField =
