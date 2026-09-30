@@ -27,9 +27,13 @@ jobs:
       - name: Test
         run: npx vitest run
       - name: Refresh the live pool snapshot
-        # Nice to have: if the runner cannot reach a public RPC, ship the
-        # snapshot that is committed in the repo.
+        # With SOLAMI_RPC_TOKEN set the snapshot enumerates VirtualPool accounts
+        # server-side through getProgramAccountsV2, which a public endpoint
+        # refuses; without it the reader falls back to walking transactions, and
+        # if the runner cannot reach an RPC at all the committed snapshot ships.
         continue-on-error: true
+        env:
+          SOLAMI_RPC_TOKEN: ${{ secrets.SOLAMI_RPC_TOKEN }}
         run: npm run pools:snapshot
       - name: Static export
         run: BASE_PATH="/${GITHUB_REPOSITORY#*/}" node scripts/build-static.mjs
