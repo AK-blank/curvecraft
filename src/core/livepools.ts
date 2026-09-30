@@ -1,11 +1,21 @@
 /**
- * Live DBC pool reader (server-only).
+ * Live DBC pool reader (server-only, used to build a snapshot).
  *
  * Free RPC endpoints refuse `getProgramAccounts` on the DBC program, so instead
- * of indexing the whole program we walk the program's *recent transactions*,
- * collect the accounts they touched, and keep the ones that decode as virtual
- * pools. That gives a fresh view of launches happening right now with a handful
- * of ordinary RPC calls.
+ * of indexing the whole program we walk its *recent transactions*, collect the
+ * accounts they touched, and keep the ones whose Anchor discriminator says they
+ * are virtual pools. That is a handful of ordinary RPC calls and it shows what
+ * is launching right now.
+ *
+ * Two details that cost real debugging time:
+ *  - a VirtualPool account is 424 bytes and a PoolConfig is 1048, so size is a
+ *    trap; discriminate on the first eight bytes instead;
+ *  - `getPool()` returns `{ poolState: { … } }`, not the state fields directly,
+ *    and the migration threshold lives on the *config* account, not the pool.
+ *
+ * Browsers cannot call these endpoints reliably (public ones block indexed
+ * requests and several refuse browser origins), so the site ships a snapshot
+ * built by `npm run pools:snapshot` instead of querying the chain per visitor.
  */
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
@@ -13,54 +23,77 @@ import {
   DynamicBondingCurveClient,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 
+const QUOTE_DECIMALS = 9; // SOL-quoted launches dominate DBC today.
+
+const POOL_DISCRIMINATORS = new Set([
+  'd5e005d16245775c', // VirtualPool
+  'eddbb8172abda923', // TransferHookPool
+]);
+
+/** Program-owned accounts that are definitely not pools. */
+const IGNORED_ACCOUNTS = new Set([
+  '11111111111111111111111111111111',
+  'ComputeBudget111111111111111111111111111111',
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+  'So11111111111111111111111111111111111111112',
+  'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
+  'TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM',
+  DYNAMIC_BONDING_CURVE_PROGRAM_ID,
+]);
+
 export interface LivePool {
   address: string;
   baseMint: string;
   creator: string;
+  config: string;
+  /** Quote tokens raised so far, in whole quote units. */
   quoteReserve: number;
+  /** Quote tokens needed to graduate, in whole quote units. */
   migrationQuoteThreshold: number;
   progressPct: number;
-  graduated: boolean;
-  /** Total trading fees collected by the pool, in quote units. */
-  totalTradingQuoteFee: number | null;
-  createdAtSlot: number | null;
+  isMigrated: boolean;
+  /** Virtual base reserve at the current price. */
+  baseReserve: number;
+  quoteVault: string;
+  activationPoint: number | null;
 }
 
-export interface LivePoolsResult {
+export interface LivePoolsSnapshot {
   pools: LivePool[];
   scannedTransactions: number;
   endpoint: string;
   fetchedAt: string;
-  error?: string;
+  /** Populated when the RPC refused part of the walk. */
+  warning?: string;
 }
 
-/** web3.js v1 bundles node-fetch, which ignores HTTP(S)_PROXY; use Node's fetch. */
 function fetchImpl(): typeof fetch {
   return (...args) => globalThis.fetch(...args);
 }
 
 export function rpcEndpoint(): string {
   return (
-    process.env.SOLANA_RPC_URL ??
-    process.env.RPC_URL ??
-    'https://solana-rpc.publicnode.com'
+    process.env.SOLANA_RPC_URL ?? process.env.RPC_URL ?? 'https://api.mainnet-beta.solana.com'
   );
 }
 
-function createConnection(): Connection {
-  return new Connection(rpcEndpoint(), { commitment: 'confirmed', fetch: fetchImpl() });
-}
-
-interface RawPoolAccount {
+interface PoolState {
   baseMint?: { toBase58(): string };
   creator?: { toBase58(): string };
-  quoteReserve?: { toString(): string };
-  migrationQuoteThreshold?: { toString(): string };
-  sqrtStartPrice?: { toString(): string };
   config?: { toBase58(): string };
+  quoteVault?: { toBase58(): string };
+  quoteReserve?: { toString(): string };
+  baseReserve?: { toString(): string };
+  isMigrated?: number | boolean;
+  activationPoint?: { toString(): string } | number;
 }
 
-const QUOTE_DECIMALS = 9; // SOL-quoted launches dominate DBC today.
+interface ConfigState {
+  migrationQuoteThreshold?: { toString(): string };
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Read the most recently touched pools on the DBC program.
@@ -68,26 +101,17 @@ const QUOTE_DECIMALS = 9; // SOL-quoted launches dominate DBC today.
  * @param limit how many pools to return
  * @param txWindow how many recent program transactions to inspect
  */
-let cache: { at: number; promise: Promise<LivePoolsResult> } | null = null;
-const CACHE_TTL_MS = 60_000;
-
-export async function readLivePools(limit = 8, txWindow = 6): Promise<LivePoolsResult> {
-  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.promise;
-  const promise = readLivePoolsUncached(limit, txWindow);
-  cache = { at: Date.now(), promise };
-  return promise;
-}
-
-async function readLivePoolsUncached(limit = 8, txWindow = 6): Promise<LivePoolsResult> {
-  const connection = createConnection();
+export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePoolsSnapshot> {
+  const connection = new Connection(rpcEndpoint(), { commitment: 'confirmed', fetch: fetchImpl() });
   const client = DynamicBondingCurveClient.create(connection, 'confirmed');
   const programId = new PublicKey(DYNAMIC_BONDING_CURVE_PROGRAM_ID);
+  const warnings: string[] = [];
 
   const signatures = await connection.getSignaturesForAddress(programId, { limit: txWindow });
   const candidates = new Set<string>();
 
   for (const { signature } of signatures) {
-    await new Promise((resolve) => setTimeout(resolve, 120));
+    await sleep(120);
     let tx = null;
     for (const version of [0, 1] as const) {
       try {
@@ -99,77 +123,76 @@ async function readLivePoolsUncached(limit = 8, txWindow = 6): Promise<LivePools
         /* try the next transaction version */
       }
     }
+    if (!tx) warnings.push(`unreadable transaction ${signature.slice(0, 10)}`);
     for (const key of tx?.transaction.message.accountKeys ?? []) {
       const pubkey = typeof key === 'string' ? key : key.pubkey.toBase58();
-      if (pubkey !== programId.toBase58()) candidates.add(pubkey);
+      if (!IGNORED_ACCOUNTS.has(pubkey)) candidates.add(pubkey);
     }
   }
 
-  const IGNORED = new Set([
-    '11111111111111111111111111111111',
-    'ComputeBudget111111111111111111111111111111',
-    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-    'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-    'So11111111111111111111111111111111111111112',
-    'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-    'TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM',
-    programId.toBase58(),
-  ]);
-  const keys = [...candidates].filter((key) => !IGNORED.has(key));
-
-  // Public RPCs cap batch sizes; keep chunks small and tolerate failures.
+  const keys = [...candidates];
   const poolAddresses: string[] = [];
   for (let i = 0; i < keys.length; i += 20) {
     const chunk = keys.slice(i, i + 20);
     try {
-      const infos = await connection.getMultipleAccountsInfo(
-        chunk.map((k) => new PublicKey(k)),
-      );
+      const infos = await connection.getMultipleAccountsInfo(chunk.map((k) => new PublicKey(k)));
       infos.forEach((info, index) => {
-        // Configs and pools share the program; pools are the larger accounts.
-        if (info && info.owner.equals(programId) && info.data.length >= 900) {
-          poolAddresses.push(chunk[index]);
-        }
+        if (!info || !info.owner.equals(programId)) return;
+        const discriminator = Buffer.from(info.data.subarray(0, 8)).toString('hex');
+        if (POOL_DISCRIMINATORS.has(discriminator)) poolAddresses.push(chunk[index]);
       });
-    } catch {
-      /* skip chunks the RPC refuses */
+    } catch (error) {
+      warnings.push(`account batch failed: ${(error as Error).message.slice(0, 60)}`);
     }
   }
 
   const pools: LivePool[] = [];
-  for (const address of poolAddresses.slice(0, limit)) {
-    // Some accounts touched by the program are not virtual pools at all.
-    let account: RawPoolAccount | null = null;
+  for (const address of poolAddresses) {
+    if (pools.length >= limit) break;
+
+    let poolState: PoolState | undefined;
     try {
-      account = (await client.state.getPool(address)) as unknown as RawPoolAccount | null;
-    } catch {
+      const account = (await client.state.getPool(address)) as unknown as {
+        poolState?: PoolState;
+      } | null;
+      poolState = account?.poolState;
+    } catch (error) {
+      warnings.push(
+        `decode failed for ${address.slice(0, 8)}: ${(error as Error).message.slice(0, 50)}`,
+      );
       continue;
     }
-    if (!account?.quoteReserve) continue;
+    if (!poolState?.quoteReserve) continue;
 
-    const quoteReserve = Number(account.quoteReserve.toString()) / 10 ** QUOTE_DECIMALS;
-    const threshold = Number(account.migrationQuoteThreshold?.toString() ?? 0) / 10 ** QUOTE_DECIMALS;
-
-    let totalTradingQuoteFee: number | null = null;
+    let threshold = 0;
     try {
-      const fees = await client.state.getPoolFeeMetrics(address);
-      const total = (fees as unknown as { total?: { totalTradingQuoteFee?: { toString(): string } } })
-        ?.total?.totalTradingQuoteFee;
-      if (total) totalTradingQuoteFee = Number(total.toString()) / 10 ** QUOTE_DECIMALS;
+      const configAddress = poolState.config?.toBase58();
+      if (configAddress) {
+        const config = (await client.state.getPoolConfig(configAddress)) as unknown as ConfigState;
+        threshold =
+          Number(config?.migrationQuoteThreshold?.toString() ?? 0) / 10 ** QUOTE_DECIMALS;
+      }
     } catch {
-      /* fee metrics are best-effort */
+      /* the threshold is a nicety; progress falls back to zero */
     }
+
+    const quoteReserve = Number(poolState.quoteReserve.toString()) / 10 ** QUOTE_DECIMALS;
+    const activationPoint = poolState.activationPoint
+      ? Number(poolState.activationPoint.toString())
+      : null;
 
     pools.push({
       address,
-      baseMint: account.baseMint?.toBase58?.() ?? 'unknown',
-      creator: account.creator?.toBase58?.() ?? 'unknown',
+      baseMint: poolState.baseMint?.toBase58() ?? 'unknown',
+      creator: poolState.creator?.toBase58() ?? 'unknown',
+      config: poolState.config?.toBase58() ?? 'unknown',
       quoteReserve,
       migrationQuoteThreshold: threshold,
       progressPct: threshold > 0 ? Math.min(100, (quoteReserve / threshold) * 100) : 0,
-      graduated: threshold > 0 && quoteReserve >= threshold,
-      totalTradingQuoteFee,
-      createdAtSlot: null,
+      isMigrated: Boolean(poolState.isMigrated),
+      baseReserve: Number(poolState.baseReserve?.toString() ?? 0) / 1e6,
+      quoteVault: poolState.quoteVault?.toBase58() ?? 'unknown',
+      activationPoint,
     });
   }
 
@@ -178,5 +201,6 @@ async function readLivePoolsUncached(limit = 8, txWindow = 6): Promise<LivePools
     scannedTransactions: signatures.length,
     endpoint: rpcEndpoint(),
     fetchedAt: new Date().toISOString(),
+    warning: warnings.length ? warnings.slice(0, 3).join(' · ') : undefined,
   };
 }

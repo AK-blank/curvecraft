@@ -202,6 +202,9 @@ src/core/presets.ts     curated launch presets
 src/core/codegen.ts     LaunchSpec -> runnable on-chain launch script
 src/app/api/simulate    POST endpoint that runs the simulator
 src/app/studio          the studio UI
+src/app/pools           live mainnet pool snapshot view
+src/core/lint.ts        pre-deploy checks using the program's own validators
+src/core/livepools.ts   reads recent DBC pools from mainnet
 scripts/sim.ts          CLI
 ```
 
@@ -219,7 +222,8 @@ scripts/sim.ts          CLI
 
 - Preset marketplace: publish and vote on community configs (URL sharing and head-to-head
   comparison already ship).
-- Live view: read real DBC pools from mainnet and show their curve progress next to a design.
+- Design against a live pool: load a real pool's config into the studio and replay its actual trade
+  history through the simulator.
 - Monte-Carlo mode: distribution over thousands of randomized demand paths instead of three runs.
 - Multi-segment curve designer (two segments, mid-price curves, custom sqrt price ladders).
 

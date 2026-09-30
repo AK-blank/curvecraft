@@ -49,6 +49,9 @@ export default function PresetsPage() {
             <Link href="/presets" className="text-slate-300">
               Presets
             </Link>
+            <Link href="/pools" className="text-slate-400 transition hover:text-slate-200">
+              Live pools
+            </Link>
             <Link
               href="/studio"
               className="rounded-lg bg-violet-500 px-4 py-2 font-medium text-white transition hover:bg-violet-400"

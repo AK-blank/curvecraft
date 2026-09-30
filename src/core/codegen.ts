@@ -24,29 +24,6 @@ export function toCreateConfigScript(spec: LaunchSpec): string {
   const shape = spec.curveShape ?? 'marketCap';
   const weighted = shape !== 'marketCap';
 
-  const feeBlock =
-    spec.feeMode === 'rateLimiter'
-      ? `    baseFeeParams: {
-      baseFeeMode: BaseFeeMode.RateLimiter,
-      rateLimiterParam: {
-        baseFeeBps: ${spec.rateLimiter?.baseFeeBps ?? spec.feeSchedule.startingFeeBps},
-        feeIncrementBps: ${spec.rateLimiter?.feeIncrementBps ?? 100},
-        referenceAmount: ${spec.rateLimiter?.referenceAmount ?? 1},
-        maxLimiterDuration: ${spec.rateLimiter?.maxLimiterDurationSec ?? 3600},
-      },
-    },`
-      : `    baseFeeParams: {
-      baseFeeMode: BaseFeeMode.${
-        spec.feeMode === 'exponential' ? 'FeeSchedulerExponential' : 'FeeSchedulerLinear'
-      },
-      feeSchedulerParam: {
-        startingFeeBps: ${spec.feeSchedule.startingFeeBps},
-        endingFeeBps: ${spec.feeSchedule.endingFeeBps},
-        numberOfPeriod: ${spec.feeSchedule.numberOfPeriods},
-        totalDuration: ${spec.feeSchedule.totalDurationSec},
-      },
-    },`;
-
   const builder = weighted
     ? `buildCurveWithLiquidityWeights({
 ${baseParams(spec)}
