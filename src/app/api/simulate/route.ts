@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { toConfigParams, toCurvePoints, deriveSpec } from '@/core/build';
-import { scaledScenarios } from '@/core/scenarios';
-import { lintSpec } from '@/core/lint';
-import { simulate } from '@/core/simulate';
+import { analyze } from '@/core/analysis';
 import type { LaunchSpec, Scenario } from '@/core/types';
 
 export const runtime = 'nodejs';
@@ -16,8 +13,9 @@ interface SimulateBody {
 }
 
 /**
- * Runs the DBC launch simulator server-side (the Meteora SDK is heavy and
- * Node-only) and returns everything the studio needs to render a launch report.
+ * HTTP entry point for the launch simulator. The studio itself runs the same
+ * code in the browser (see `@/core/analysis`), so this route exists for scripts,
+ * CI and anyone who would rather curl than click.
  */
 export async function POST(request: Request) {
   let body: SimulateBody;
@@ -27,41 +25,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { spec } = body;
-  if (!spec) {
+  if (!body.spec) {
     return NextResponse.json({ error: 'Missing `spec`' }, { status: 400 });
   }
 
   try {
-    const config = toConfigParams(spec);
-    const derived = deriveSpec(spec, config);
-    const curve = toCurvePoints(config);
-
-    // No explicit scenarios? Scale demand to this launch's graduation target.
-    const scenarios =
-      body.scenarios && body.scenarios.length > 0
-        ? body.scenarios
-        : scaledScenarios(derived.migrationQuoteThreshold);
-
-    const runs = scenarios.map((scenario) => simulate(spec, scenario));
-
-    const comparisons = (body.compareSpecs ?? []).map((entry) => {
-      const compareConfig = toConfigParams(entry.spec);
-      return {
-        name: entry.name,
-        derived: deriveSpec(entry.spec, compareConfig),
-        runs: scenarios.map((scenario) => simulate(entry.spec, scenario)),
-      };
-    });
-
-    return NextResponse.json({
-      derived,
-      curve,
-      runs,
-      comparisons,
-      lint: lintSpec(spec),
-      specName: spec.name,
-    });
+    return NextResponse.json(
+      analyze(body.spec, { scenarios: body.scenarios, compareSpecs: body.compareSpecs }),
+    );
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || 'Simulation failed' },

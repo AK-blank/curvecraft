@@ -138,6 +138,22 @@ demand above the target graduates and demand below it does not, that a higher fe
 schedule earns more, that the same input produces the same output, and that a
 spec survives a round trip through a share link.
 
+## Live demo
+
+The studio runs the Meteora SDK **in the browser**, so the whole app exports to
+static files and is hosted on GitHub Pages — no server, no API keys, nothing to
+rate-limit a judge:
+
+```bash
+node scripts/build-static.mjs                          # -> ./out
+BASE_PATH=/curvecraft node scripts/build-static.mjs    # for project pages
+```
+
+`.github/workflows/deploy-pages.yml` runs the tests, exports and publishes on
+every push to `main`. `POST /api/simulate` and `POST /api/montecarlo` remain in
+the repo for scripts and CI; they call the same `@/core/analysis` functions the
+browser does.
+
 ## Quick start
 
 ```bash

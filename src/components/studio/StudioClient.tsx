@@ -18,7 +18,7 @@ const COMPARE_COLORS = ['#22d3ee', '#f472b6', '#facc15'];
 import { toCreateConfigScript } from '@/core/codegen';
 import { CURVE_SHAPE_LABELS } from '@/core/build';
 import { PRESETS } from '@/core/presets';
-import { encodeSpec } from '@/core/share';
+import { decodeSpec, encodeSpec } from '@/core/share';
 import type {
   CurvePointView,
   LaunchSpec,
@@ -95,17 +95,9 @@ function clock(seconds: number): string {
   return `${(seconds / 3600).toFixed(1)}h`;
 }
 
-export default function StudioClient({
-  initialSpec,
-  sharedFromUrl = false,
-}: {
-  initialSpec?: LaunchSpec;
-  sharedFromUrl?: boolean;
-}) {
-  const [spec, setSpec] = useState<LaunchSpec>(() =>
-    structuredClone(initialSpec ?? PRESETS[0].spec),
-  );
-  const [presetId, setPresetId] = useState(sharedFromUrl ? 'shared' : PRESETS[0].id);
+export default function StudioClient() {
+  const [spec, setSpec] = useState<LaunchSpec>(() => structuredClone(PRESETS[0].spec));
+  const [presetId, setPresetId] = useState(PRESETS[0].id);
   const [data, setData] = useState<SimulateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,26 +111,34 @@ export default function StudioClient({
 
   const run = useCallback(
     async (nextSpec: LaunchSpec, compareSpecs: Array<{ name: string; spec: LaunchSpec }>) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/simulate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spec: nextSpec, compareSpecs }),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error ?? 'Simulation failed');
-      setData(payload as SimulateResponse);
-      setActiveRun(0);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+      setLoading(true);
+      setError(null);
+      try {
+        // The Meteora SDK runs happily in the browser, so the whole launch
+        // report is computed in-page: no round trip, and the app deploys as
+        // static files. The SDK is heavy, so it is imported on demand.
+        const { analyze } = await import('@/core/analysis');
+        const payload = analyze(nextSpec, { compareSpecs });
+        setData(payload as unknown as SimulateResponse);
+        setActiveRun(0);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
     },
     [],
   );
+
+  useEffect(() => {
+    const encoded = new URLSearchParams(window.location.search).get('s');
+    if (!encoded) return;
+    const decoded = decodeSpec(encoded);
+    if (!decoded) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSpec(decoded);
+    setPresetId('shared');
+  }, []);
 
   const compareSpecs = useMemo(
     () =>
@@ -160,13 +160,9 @@ export default function StudioClient({
       if (cancelled) return;
       setMcLoading(true);
       try {
-        const response = await fetch('/api/montecarlo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ spec, runs: mcRuns }),
-        });
-        const payload = (await response.json()) as MonteCarloResponse;
-        if (!cancelled && response.ok) setMonteCarlo(payload);
+        const { analyzeMonteCarlo } = await import('@/core/analysis');
+        const payload = analyzeMonteCarlo(spec, { runs: mcRuns }) as unknown as MonteCarloResponse;
+        if (!cancelled) setMonteCarlo(payload);
       } catch {
         /* keep the previous distribution on failure */
       } finally {

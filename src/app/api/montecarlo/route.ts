@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { deriveSpec, toConfigParams } from '@/core/build';
-import { monteCarlo, type DemandModel } from '@/core/montecarlo';
+import { analyzeMonteCarlo } from '@/core/analysis';
+import type { DemandModel } from '@/core/montecarlo';
 import type { LaunchSpec } from '@/core/types';
 
 export const runtime = 'nodejs';
@@ -14,10 +14,7 @@ interface MonteCarloBody {
   model?: Partial<DemandModel>;
 }
 
-/**
- * Samples many demand paths for a launch spec and returns the distribution of
- * outcomes (graduation probability, fee and market-cap percentiles).
- */
+/** HTTP entry point for the Monte-Carlo sampler; the studio calls the same code in-page. */
 export async function POST(request: Request) {
   let body: MonteCarloBody;
   try {
@@ -26,20 +23,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { spec } = body;
-  if (!spec) {
+  if (!body.spec) {
     return NextResponse.json({ error: 'Missing `spec`' }, { status: 400 });
   }
 
   try {
-    const config = toConfigParams(spec);
-    const derived = deriveSpec(spec, config);
-    const result = monteCarlo(spec, derived.migrationQuoteThreshold, {
-      runs: body.runs,
-      seed: body.seed,
-      model: body.model,
-    });
-    return NextResponse.json({ derived, result });
+    return NextResponse.json(
+      analyzeMonteCarlo(body.spec, { runs: body.runs, seed: body.seed, model: body.model }),
+    );
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message || 'Monte-Carlo run failed' },
