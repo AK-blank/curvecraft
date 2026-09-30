@@ -125,5 +125,6 @@ happen before any track form is worth filling in.
 
 **A cut is already published:** <https://ak-blank.github.io/curvecraft/demo/> (2:57, 1080p, narrated,
 captions burned in). It is generated from real screenshots of the deployed app by
-`browser-tmp/make_video.py`, so it can be regenerated after any UI change. `docs/demo-script.md` is
+`scripts/capture-demo-frames.py` + `scripts/make-demo-video.py`, so it can be regenerated after any
+UI change. `docs/demo-script.md` is
 the shot-by-shot script if you would rather record it in your own voice.
