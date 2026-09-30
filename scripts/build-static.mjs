@@ -34,7 +34,13 @@ try {
   execSync('npx next build', {
     cwd: root,
     stdio: 'inherit',
-    env: { ...process.env, STATIC_EXPORT: '1' },
+    env: {
+      ...process.env,
+      STATIC_EXPORT: '1',
+      // Public assets (the demo video) are not rewritten by Next's basePath,
+      // so the page needs to know the prefix at build time.
+      NEXT_PUBLIC_BASE_PATH: process.env.BASE_PATH ?? '',
+    },
   });
   console.log('\nStatic bundle written to ./out');
 } finally {

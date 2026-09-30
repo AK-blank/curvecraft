@@ -58,7 +58,7 @@ Everything needed to submit CurveCraft, so the actual submission takes minutes.
 | Live demo | <https://ak-blank.github.io/curvecraft/studio/> |
 | Preset marketplace | <https://ak-blank.github.io/curvecraft/presets/> |
 | Live mainnet pools | <https://ak-blank.github.io/curvecraft/pools/> |
-| Demo video | `<Loom / YouTube link>` |
+| Demo video | <https://ak-blank.github.io/curvecraft/demo/> |
 | X post | `<optional>` |
 
 ## Track: Best use of Meteora's Dynamic Bonding Curve (DBC) — $20,000
@@ -123,4 +123,7 @@ happen before any track form is worth filling in.
 
 ## Video
 
-`docs/demo-script.md` is the shot-by-shot script (3:10–3:30, recorded at 1080p with voiceover).
+**A cut is already published:** <https://ak-blank.github.io/curvecraft/demo/> (2:57, 1080p, narrated,
+captions burned in). It is generated from real screenshots of the deployed app by
+`browser-tmp/make_video.py`, so it can be regenerated after any UI change. `docs/demo-script.md` is
+the shot-by-shot script if you would rather record it in your own voice.
