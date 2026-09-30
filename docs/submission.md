@@ -79,20 +79,35 @@ Against the published criteria:
 They also list "DBC Config Preset Marketplace" among the ideas they want: CurveCraft ships a preset
 marketplace with measured graduation odds per preset and one-click forking into the studio.
 
-## Other tracks worth submitting the same project to
+## Every track CurveCraft is eligible for
 
-All are Global and free to submit (hackathon tracks do not consume credits):
+All 35 sidetracks were checked for the residency badge on their listing page. Global tracks
+accept a builder anywhere; the rest are gated to a country or region (Germany, Netherlands,
+Ireland, Georgia, Nepal, Spain, Singapore, Japan, Canada, Malaysia, Thailand, Kazakhstan, Brazil,
+Turkey, Australia, the Balkans, Poland, Nigeria, India, Ukraine, Argentina, UAE, the UK).
 
-| Track | Prize | Why it fits |
-|---|---|---|
-| Superteam Vietnam | $10,000 | Same project, Vietnam track |
-| SolanaCZE | $10,000 | Same project |
-| Superteam Australia / Argentina / Türkiye / Ukraine / Thailand / Georgia | $10,000 each | Same project where the track is not residency-gated |
-| RPC Fast Infrastructure | $10,474 | Only if we add an RPC-Fast-backed live pool view |
-| CertiK Security Audit Credits | $100,000 (credits) | The launch check is a config-safety tool |
+| Track | Prize pool | Submissions | What it needs |
+|---|---|---|---|
+| **Best use of Meteora's DBC** | **$20,000 USDC** | 14 | The core submission |
+| **SolanaCZE Track** | **$10,000 USDG** | **0** | Any Colosseum project — same submission |
+| **Superteam Vietnam Track** | **$10,000 USDG** | 16 | Any Colosseum project — same submission |
+| Panta API Sidetrack | $5,000 USDG | 10 | Uses the Panta API |
+| Build something live on Solana data | $3,000 USDG | 13 | Uses real-time/on-chain Solana data (the `/pools` view is close) |
+| RPC Fast Infrastructure | $10,474 (credits) | 5 | Runs on RPC Fast endpoints + follow/post requirements |
+| Adevar Labs pre-audit credits | $4,000 USDC | 7 | Project submitted for pre-audit |
+| CertiK Security Audit Credits | $100,000 (credits) | **0** | The launch check is a config-safety story |
 
-Check each track's page for residency requirements before submitting — several Superteam tracks are
-region-gated (the two biggest Colosseum *bounties*, Germany and Netherlands, are).
+That is **$40,000 of cash prize pools reachable with one project**, plus credits. Submitting the
+same project to several tracks is explicitly how Colosseum sidetracks work — each is judged
+separately — but the *Colosseum submission itself is a prerequisite for all of them*, so it has to
+happen before any track form is worth filling in.
+
+## Hooks we could add cheaply to qualify for two more tracks
+
+- **Panta API** ($5,000): their API serves on-chain/Solana data; using it for the live pool feed
+  instead of raw RPC would qualify.
+- **Solana data track** ($3,000): "build something live on Solana data" — the `/pools` snapshot
+  already reads real program accounts; making it more prominent may be enough.
 
 ## Colosseum submission fields (typical)
 

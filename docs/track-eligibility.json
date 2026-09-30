@@ -1,0 +1,138 @@
+{
+ "ai-solana-track": {
+  "region": "TH",
+  "subs": 2
+ },
+ "build-solutions-advancing-the-machine-economy-with-peaq": {
+  "region": "DE",
+  "subs": 0
+ },
+ "build-something-live-on-solana-data": {
+  "region": "Global",
+  "subs": 13
+ },
+ "colosseum-crypto-worlds-fair-hackathon-la-familia-track": {
+  "region": "ES",
+  "subs": 0
+ },
+ "colosseum-crypto-worlds-fair-hackathon-rpc-fast-infrastructure-sidetrack": {
+  "region": "Global",
+  "subs": 5
+ },
+ "colosseum-crypto-worlds-fair-hackathon-solanacze-track": {
+  "region": "Global",
+  "subs": 0
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-argentina-track": {
+  "region": "AR",
+  "subs": null
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-australia-track": {
+  "region": "AU",
+  "subs": null
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-balkan-track": {
+  "region": "Balkan",
+  "subs": null
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-georgia-track": {
+  "region": "GE",
+  "subs": 0
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-germany-track": {
+  "region": "DE",
+  "subs": 0
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-ie-track": {
+  "region": "IE",
+  "subs": null
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-india-track": {
+  "region": "IN",
+  "subs": 7
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-kazakhstan-track": {
+  "region": "KZ",
+  "subs": 3
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-nepal-track": {
+  "region": "NP",
+  "subs": 0
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-nigeria-track": {
+  "region": "NG",
+  "subs": 4
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-nl-track": {
+  "region": "NL",
+  "subs": 0
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-poland-track": {
+  "region": "PL",
+  "subs": 2
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-singapore-track": {
+  "region": "SG",
+  "subs": 0
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-ukraine-track": {
+  "region": "UA",
+  "subs": 2
+ },
+ "colosseum-crypto-worlds-fair-hackathon-superteam-vietnam-track": {
+  "region": "Global",
+  "subs": 16
+ },
+ "meteora-dbc": {
+  "region": "Global",
+  "subs": 14
+ },
+ "panta-api-side-track": {
+  "region": "Global",
+  "subs": 10
+ },
+ "pre-audit-credits-adevarlabs": {
+  "region": "Global",
+  "subs": 7
+ },
+ "side-track-superteam-brasil": {
+  "region": "BR",
+  "subs": 2
+ },
+ "submit-crypto-worlds-fair-project-for-turkish-builders": {
+  "region": "TR",
+  "subs": 4
+ },
+ "submit-project-for-certik-security-audit-credits": {
+  "region": "Global",
+  "subs": 0
+ },
+ "submit-solana-project-to-build-for-breakpoint-track": {
+  "region": "UK",
+  "subs": 0
+ },
+ "superteam-japan-x-enxross-by-tokyo-dome-side-track": {
+  "region": "JP",
+  "subs": 0
+ },
+ "superteam-kazakhstan-x-idos-games-side-track": {
+  "region": "KZ",
+  "subs": 0
+ },
+ "superteam-my-x-solami-build-global-buatan-malaysia": {
+  "region": "MY",
+  "subs": 0
+ },
+ "superteam-my-x-superscrypt-build-global-buatan-malaysia": {
+  "region": "MY",
+  "subs": 0
+ },
+ "superteamuae-sidetrack-colosseum": {
+  "region": "AE",
+  "subs": 0
+ },
+ "worlds-fair-canada": {
+  "region": "CA",
+  "subs": null
+ }
+}
