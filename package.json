@@ -12,7 +12,9 @@
     "shapes": "tsx scripts/curve-shapes.ts",
     "verify:mainnet": "node --use-env-proxy --import tsx scripts/mainnet-simulate.ts",
     "emit": "tsx scripts/emit-launch.ts",
-    "pools:snapshot": "node --use-env-proxy --import tsx scripts/pools-snapshot.ts"
+    "pools:snapshot": "node --use-env-proxy --import tsx scripts/pools-snapshot.ts",
+    "solami:pools": "node --use-env-proxy --import tsx scripts/solami-stream.ts pools",
+    "solami:stream": "node --use-env-proxy --import tsx scripts/solami-stream.ts stream"
   },
   "dependencies": {
     "@meteora-ag/dynamic-bonding-curve-sdk": "^1.5.13",
@@ -24,6 +26,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^2.15.4",
+    "solami": "^0.1.56",
     "zod": "^4.6.5"
   },
   "devDependencies": {

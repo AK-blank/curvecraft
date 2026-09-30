@@ -25,6 +25,11 @@ import {
 
 import { deriveSpec, toConfigParams } from './build';
 import { redactEndpoint, resolveRpcProvider } from './providers';
+import {
+  discoverPoolsViaSolami,
+  hasSolami,
+  solamiConnection,
+} from './solami-source';
 import type { LaunchSpec } from './types';
 
 const QUOTE_DECIMALS = 9; // SOL-quoted launches dominate DBC today.
@@ -89,6 +94,8 @@ export interface LivePoolsSnapshot {
   fetchedAt: string;
   /** Populated when the RPC refused part of the walk. */
   warning?: string;
+  /** How pool addresses were found: a Solami enumeration or the transaction walk. */
+  discovery?: string;
 }
 
 function fetchImpl(): typeof fetch {
@@ -242,49 +249,80 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * @param txWindow how many recent program transactions to inspect
  */
 export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePoolsSnapshot> {
-  const connection = new Connection(rpcEndpoint(), { commitment: 'confirmed', fetch: fetchImpl() });
-  const client = DynamicBondingCurveClient.create(connection, 'confirmed');
+  let connection = new Connection(rpcEndpoint(), { commitment: 'confirmed', fetch: fetchImpl() });
   const programId = new PublicKey(DYNAMIC_BONDING_CURVE_PROGRAM_ID);
   const warnings: string[] = [];
 
-  const signatures = await connection.getSignaturesForAddress(programId, { limit: txWindow });
-  const candidates = new Set<string>();
+  let poolAddresses: string[] = [];
+  let scannedTransactions = 0;
+  let discovery = 'transaction walk';
 
-  for (const { signature } of signatures) {
-    await sleep(120);
-    let tx = null;
-    for (const version of [0, 1] as const) {
+  // Preferred path: ask the endpoint for the pools themselves. A filtered
+  // server-side enumeration sees every live VirtualPool, not just the ones that
+  // happened to trade inside our window.
+  if (hasSolami()) {
+    try {
+      const found = await discoverPoolsViaSolami({
+        limit: Math.max(limit * 8, 48),
+        includeTransferHook: true,
+      });
+      poolAddresses = found.addresses;
+      scannedTransactions = found.scanned;
+      discovery = `Solami getProgramAccountsV2 (${found.addresses.length} VirtualPool accounts)`;
+      if (found.truncated) warnings.push('pool enumeration hit our own limit');
       try {
-        tx = await connection.getParsedTransaction(signature, {
-          maxSupportedTransactionVersion: version,
-        });
-        break;
-      } catch {
-        /* try the next transaction version */
+        connection = await solamiConnection();
+      } catch (error) {
+        warnings.push(`Solami connection unavailable: ${(error as Error).message.slice(0, 50)}`);
+      }
+    } catch (error) {
+      warnings.push(`Solami enumeration failed, falling back: ${(error as Error).message.slice(0, 60)}`);
+    }
+  }
+
+  if (poolAddresses.length === 0) {
+    const signatures = await connection.getSignaturesForAddress(programId, { limit: txWindow });
+    scannedTransactions = signatures.length;
+    const candidates = new Set<string>();
+
+    for (const { signature } of signatures) {
+      await sleep(120);
+      let tx = null;
+      for (const version of [0, 1] as const) {
+        try {
+          tx = await connection.getParsedTransaction(signature, {
+            maxSupportedTransactionVersion: version,
+          });
+          break;
+        } catch {
+          /* try the next transaction version */
+        }
+      }
+      if (!tx) warnings.push(`unreadable transaction ${signature.slice(0, 10)}`);
+      for (const key of tx?.transaction.message.accountKeys ?? []) {
+        const pubkey = typeof key === 'string' ? key : key.pubkey.toBase58();
+        if (!IGNORED_ACCOUNTS.has(pubkey)) candidates.add(pubkey);
       }
     }
-    if (!tx) warnings.push(`unreadable transaction ${signature.slice(0, 10)}`);
-    for (const key of tx?.transaction.message.accountKeys ?? []) {
-      const pubkey = typeof key === 'string' ? key : key.pubkey.toBase58();
-      if (!IGNORED_ACCOUNTS.has(pubkey)) candidates.add(pubkey);
+
+    const keys = [...candidates];
+    for (let i = 0; i < keys.length; i += 20) {
+      const chunk = keys.slice(i, i + 20);
+      try {
+        const infos = await connection.getMultipleAccountsInfo(chunk.map((k) => new PublicKey(k)));
+        infos.forEach((info, index) => {
+          if (!info || !info.owner.equals(programId)) return;
+          const discriminator = Buffer.from(info.data.subarray(0, 8)).toString('hex');
+          if (POOL_DISCRIMINATORS.has(discriminator)) poolAddresses.push(chunk[index]);
+        });
+      } catch (error) {
+        warnings.push(`account batch failed: ${(error as Error).message.slice(0, 60)}`);
+      }
     }
   }
 
-  const keys = [...candidates];
-  const poolAddresses: string[] = [];
-  for (let i = 0; i < keys.length; i += 20) {
-    const chunk = keys.slice(i, i + 20);
-    try {
-      const infos = await connection.getMultipleAccountsInfo(chunk.map((k) => new PublicKey(k)));
-      infos.forEach((info, index) => {
-        if (!info || !info.owner.equals(programId)) return;
-        const discriminator = Buffer.from(info.data.subarray(0, 8)).toString('hex');
-        if (POOL_DISCRIMINATORS.has(discriminator)) poolAddresses.push(chunk[index]);
-      });
-    } catch (error) {
-      warnings.push(`account batch failed: ${(error as Error).message.slice(0, 60)}`);
-    }
-  }
+  // The SDK client decodes account layouts; point it at whichever connection won.
+  const client = DynamicBondingCurveClient.create(connection, 'confirmed');
 
   const pools: LivePool[] = [];
   for (const address of poolAddresses) {
@@ -349,9 +387,10 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
   const provider = resolveRpcProvider();
   return {
     pools,
-    scannedTransactions: signatures.length,
+    scannedTransactions,
     endpoint: redactEndpoint(provider.url),
     provider: provider.label,
+    discovery,
     fetchedAt: new Date().toISOString(),
     warning: warnings.length ? warnings.slice(0, 3).join(' · ') : undefined,
   };

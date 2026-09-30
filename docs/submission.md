@@ -58,7 +58,7 @@ Everything needed to submit CurveCraft, so the actual submission takes minutes.
 | Live demo | <https://ak-blank.github.io/curvecraft/studio/> |
 | Preset marketplace | <https://ak-blank.github.io/curvecraft/presets/> |
 | Live mainnet pools | <https://ak-blank.github.io/curvecraft/pools/> |
-| Demo video | <https://ak-blank.github.io/curvecraft/demo/> |
+| Demo video | <https://youtu.be/Qj71JKh-Kak> (YouTube, unlisted — Colosseum only accepts YouTube/Loom/Vimeo links) |
 | X post | `<optional>` |
 
 ## Track: Best use of Meteora's Dynamic Bonding Curve (DBC) — $20,000
