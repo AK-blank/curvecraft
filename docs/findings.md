@@ -69,9 +69,15 @@ whether that whale dumps. Then we run the launch against each path with the SDK'
 
 For the Fair Launch preset (1,600 SOL raise target), 200 paths give:
 
-- **43% graduation probability**
-- Median fees: 17.6 SOL — but the 10th percentile is 6.3 SOL and the 90th is 21.4 SOL
-- Median peak market cap 6.8k SOL against an 8k graduation target
+- **40% graduation probability**
+- Median fees: 16.5 SOL — but the 10th percentile is 6.3 SOL and the 90th is 21.4 SOL
+- Median peak market cap 6.5k SOL against an 8k graduation target
+
+The demand model is deliberately exogenous: a SOL-quoted community launch is assumed to attract
+roughly 1,300 SOL of demand no matter what its raise target says, because a launch does not get
+more buyers by asking for more. The design decides whether that is enough — which is why the same
+250 paths give the Meme Speedrun preset an 82% graduation chance at a 731 SOL target and Deep
+Migration a 27% chance at 2,400 SOL.
 
 The headline number a founder needs is not "peak market cap under my base case". It is "**57% of
 the time this curve does not graduate**".

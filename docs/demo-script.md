@@ -80,10 +80,10 @@ then the percentiles, then the histogram.
 > buy size are lognormal, there's a 70% chance of a sniper wave and a 35% chance of a whale, and a
 > coin flip on whether the whale dumps.
 >
-> Two hundred paths, each one priced fill-by-fill with the SDK. Result: a **43% graduation
+> Two hundred paths, each one priced fill-by-fill with the SDK. Result: a **40% graduation
 > probability**. Median fees of 17.6 SOL — but the 10th percentile is 6.3 and the 90th is 21.4.
 >
-> The number a founder actually needs is not the base case. It's that 57% of the time, this curve
+> The number a founder actually needs is not the base case. It's that 60% of the time, this curve
 > does not graduate."
 
 **Screen:** click `500 runs` to show it re-samples.
@@ -118,7 +118,7 @@ then the percentiles, then the histogram.
 - Record at 1080p or higher; keep the terminal off-screen.
 - If a number differs from this script by a rounding step, say the number on screen — never the
   script's. The app is deterministic for a given preset and seed, but presets get tuned.
-- The 21.7% sniper premium and 43% graduation probability come from the Meme Speedrun and Fair
+- The 21.7% sniper premium and 40% graduation probability come from the Meme Speedrun and Fair
   Launch presets respectively; if you change presets mid-recording, re-read the panel.
 - Total narration is ~430 words. At a normal pace that lands just under three minutes; if you run
   long, cut the whale scenario (0:55–1:40) rather than the Monte-Carlo section.

@@ -8,7 +8,12 @@
  */
 import { deriveSpec, toConfigParams, toCurvePoints } from './build';
 import { lintSpec, type LintResult } from './lint';
-import { monteCarlo, type DemandModel, type MonteCarloResult } from './montecarlo';
+import {
+  demandProfileFor,
+  monteCarlo,
+  type DemandModel,
+  type MonteCarloResult,
+} from './montecarlo';
 import { scaledScenarios } from './scenarios';
 import { simulate } from './simulate';
 import type { CurvePointView, LaunchSpec, Scenario, SimulationResult, SpecDerivedLike } from './types';
@@ -75,6 +80,9 @@ export function analyzeMonteCarlo(
   const derived = deriveSpec(spec, toConfigParams(spec));
   return {
     derived,
-    result: monteCarlo(spec, derived.migrationQuoteThreshold, options),
+    result: monteCarlo(spec, derived.migrationQuoteThreshold, {
+      ...options,
+      model: options.model ?? demandProfileFor(spec.quoteAsset, derived.migrationQuoteThreshold),
+    }),
   };
 }

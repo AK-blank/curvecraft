@@ -102,6 +102,25 @@ function percentile(sorted: number[], p: number): number {
   return sorted[index];
 }
 
+/**
+ * A demand assumption for a launch, by what it is priced in.
+ *
+ * These are starting points a founder is expected to argue with, not forecasts:
+ * a SOL-quoted community token seeing roughly 1,300 SOL of demand, a
+ * stablecoin-quoted launch seeing roughly 500k, and anything else scaled off its
+ * own raise target so the odds are at least in a sane range.
+ */
+export function demandProfileFor(quoteAsset: string, raiseTarget: number): DemandModel {
+  const base = { ...DEFAULT_DEMAND_MODEL };
+  if (quoteAsset === 'USDC') {
+    return { ...base, buyersMean: 180, buyMean: 2_800 };
+  }
+  if (quoteAsset === 'SOL') {
+    return base;
+  }
+  return { ...base, buyMean: (raiseTarget * 1.2) / Math.max(1, base.buyersMean) };
+}
+
 export const DEFAULT_DEMAND_MODEL: DemandModel = {
   buyersMean: 320,
   buyersSigma: 0.6,
@@ -184,6 +203,13 @@ export function monteCarlo(
   const runs = Math.max(1, Math.min(options.runs ?? 200, 2_000));
   const seed = options.seed ?? 42;
   const model: DemandModel = { ...DEFAULT_DEMAND_MODEL, ...options.model };
+
+  // Demand is exogenous: a launch does not attract more buyers because it set a
+  // higher target. So the *caller* supplies the demand assumption (see
+  // `demandProfileFor`), and the raise target only decides whether that demand is
+  // enough. Scaling demand to the target instead would make every design graduate
+  // with the same probability and the metric would say nothing.
+  void raiseTarget;
   const rand = mulberry32(seed);
 
   const fees: number[] = [];

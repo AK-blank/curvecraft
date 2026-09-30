@@ -75,11 +75,11 @@ Founders under-ask because they assume linearity.
 Sampling 200 demand paths (lognormal buyers and sizes, 70% sniper probability, 35% whale
 probability) against the Fair Launch preset:
 
-- **43% graduation probability** *(measured)*
+- **40% graduation probability** *(measured)*
 - Fees: 6.3 SOL at p10, 17.6 at p50, 21.4 at p90
 - Median peak market cap 6.8k SOL against an 8k target
 
-The honest headline is "57% of the time this does not graduate", not "peak market cap 6.8k".
+The honest headline is "60% of the time this does not graduate", not "peak market cap 6.8k".
 
 *Visual:* histogram with the graduation target marked.
 
@@ -124,5 +124,5 @@ most? Those become the next presets.
 | Sniper premium +21.7% | `npm run sim -- --all`, Meme Speedrun × Sniper wave |
 | Organic fee 2.481% vs sniper 3.019% | same run |
 | Raise 666.7 → 5,197.5 SOL for 2k → 64k MC | `npx tsx scripts/curve-table.ts` |
-| 43% graduation probability, 200 paths | `/presets` (seed 7) |
+| 40% graduation probability, 200 paths | `/presets` (seed 7) |
 | 15 invariants | `npm test` |

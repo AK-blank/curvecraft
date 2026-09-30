@@ -113,7 +113,7 @@ export default function Home() {
                 </p>
               </div>
               <div>
-                <div className="font-mono text-3xl text-violet-300">43%</div>
+                <div className="font-mono text-3xl text-violet-300">40%</div>
                 <p className="mt-2 text-sm text-slate-400">
                   graduation probability for the default preset across 200 sampled demand paths —
                   the number a founder actually needs before deploying.
