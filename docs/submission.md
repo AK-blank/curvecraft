@@ -111,15 +111,40 @@ happen before any track form is worth filling in.
 - **Solana data track** ($3,000): "build something live on Solana data" — the `/pools` snapshot
   already reads real program accounts; making it more prominent may be enough.
 
-## Colosseum submission fields (typical)
+## The actual submission form (read off the live Meteora track)
 
-- **Project name:** CurveCraft
-- **One-liner:** see above
-- **Description:** the long description above
-- **GitHub:** repo link
-- **Website:** the GitHub Pages demo
-- **Video:** the 3-minute demo
-- **Colosseum profile:** the user's profile link (required by the sidetrack forms)
+Clicking **Submit Now** on `superteam.fun/earn/listing/meteora-dbc` opens this form. Every field is
+pre-filled below except the three Colosseum ones, which is why the Colosseum registration blocks
+every track.
+
+| Field | Value to paste |
+|---|---|
+| Project Name | `CurveCraft` |
+| Project Description | the long description at the top of this file |
+| Project Github Link | `https://github.com/AK-blank/curvecraft` |
+| Project Website | `https://ak-blank.github.io/curvecraft/studio/` |
+| Project X Link | the account used for the bounty posts |
+| Link to your pitch deck or Loom/video presentation | `https://ak-blank.github.io/curvecraft/demo/` |
+| Did you submit this project to the official Crypto World's Fair Hackathon on Colosseum? | **Yes** |
+| Link to Colosseum project | `<needs the Colosseum submission>` |
+| Link to your project's Colosseum profile | `<needs the Colosseum profile>` |
+| Anything Else? | the findings summary, plus the live pool pages |
+| Confirmation checkbox | tick it |
+
+The form also carries a warning that submitting something which does not meet the track scope can
+restrict future submissions, so each track gets the same project but a track-specific description
+(the table below says which angle to lead with).
+
+### Per-track angle
+
+| Track | Lead with |
+|---|---|
+| Meteora DBC | the simulator's SDK-accurate replay, the curve-shape findings, the preset marketplace |
+| SolanaCZE | the whole project: open source, live demo, no wallet required |
+| Superteam Vietnam | the whole project, plus the launch check that caught a real deploy-time bug |
+| RPC Fast | the live-data layer running on RPC Fast endpoints (`docs/providers.md`) |
+| Build something live on Solana data | the pool reader: real program accounts turned into per-pool progress |
+| Panta | only if the prediction-market idea is built |
 
 ## Video
 
