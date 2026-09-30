@@ -99,6 +99,7 @@ export default function StudioClient() {
   const [mcLoading, setMcLoading] = useState(false);
   const [mcRuns, setMcRuns] = useState(200);
   const [shareLabel, setShareLabel] = useState('Copy share link');
+  const [reportLabel, setReportLabel] = useState('Copy report');
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
   const run = useCallback(
@@ -166,6 +167,30 @@ export default function StudioClient() {
       clearTimeout(timer);
     };
   }, [spec, mcRuns]);
+
+  const copyReport = async () => {
+    if (!data) return;
+    try {
+      const { toLaunchReport } = await import('@/core/report');
+      const markdown = toLaunchReport({
+        spec,
+        analysis: {
+          derived: data.derived,
+          curve: data.curve,
+          runs: data.runs,
+          comparisons: data.comparisons,
+          lint: data.lint,
+          specName: data.specName,
+        },
+        monteCarlo: monteCarlo?.result ?? null,
+      });
+      await navigator.clipboard.writeText(markdown);
+      setReportLabel('Report copied');
+    } catch {
+      setReportLabel('Copy failed');
+    }
+    setTimeout(() => setReportLabel('Copy report'), 2_000);
+  };
 
   const share = async () => {
     const url = `${window.location.origin}/studio?s=${encodeSpec(spec)}`;
@@ -265,6 +290,13 @@ export default function StudioClient() {
             </span>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              onClick={() => void copyReport()}
+              disabled={!data}
+              className="rounded-full border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:text-slate-100 disabled:opacity-40"
+            >
+              {reportLabel}
+            </button>
             <button
               onClick={() => void share()}
               className="rounded-full border border-violet-500/60 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:bg-violet-500/10"
