@@ -262,14 +262,18 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
   // happened to trade inside our window.
   if (hasSolami()) {
     try {
+      // The enumeration is cheap and server-side, so ask for more than the page
+      // needs: a pool with no volume still belongs in the picture, and the walk
+      // it replaces could only ever see whoever traded last.
       const found = await discoverPoolsViaSolami({
-        limit: Math.max(limit * 8, 48),
+        limit: Math.max(limit * 48, 512),
         includeTransferHook: true,
       });
       poolAddresses = found.addresses;
       scannedTransactions = found.scanned;
-      discovery = `Solami getProgramAccountsV2 (${found.addresses.length} VirtualPool accounts)`;
-      if (found.truncated) warnings.push('pool enumeration hit our own limit');
+      discovery =
+        `Solami getProgramAccountsV2 (${found.addresses.length} VirtualPool accounts` +
+        `${found.truncated ? ', capped' : ''})`;
       try {
         connection = await solamiConnection();
       } catch (error) {

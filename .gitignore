@@ -45,3 +45,8 @@ next-env.d.ts
 
 # emitted launch scripts used for type-checking
 /scripts/generated
+
+# Local secrets (Solami / RPC Fast tokens)
+.env
+.env.*
+!.env.example

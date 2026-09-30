@@ -10,11 +10,12 @@
  * Resolution order, first match wins:
  *
  *   1. SOLAMI_RPC_URL            — full endpoint, e.g. from the Solami dashboard
- *   2. SOLAMI_API_KEY            — expanded through SOLAMI_RPC_TEMPLATE
- *   3. RPC_FAST_URL              — full endpoint from the RPC Fast dashboard
- *   4. RPC_FAST_API_KEY          — expanded through RPC_FAST_RPC_TEMPLATE
- *   5. SOLANA_RPC_URL / RPC_URL  — any custom endpoint
- *   6. public mainnet            — the default, rate-limited but keyless
+ *   2. SOLAMI_RPC_TOKEN          — the Solami SDK's own variable name
+ *   3. SOLAMI_API_KEY            — expanded through SOLAMI_RPC_TEMPLATE
+ *   4. RPC_FAST_URL              — full endpoint from the RPC Fast dashboard
+ *   5. RPC_FAST_API_KEY          — expanded through RPC_FAST_RPC_TEMPLATE
+ *   6. SOLANA_RPC_URL / RPC_URL  — any custom endpoint
+ *   7. public mainnet            — the default, rate-limited but keyless
  */
 export type ProviderId = 'solami' | 'rpcfast' | 'custom' | 'public';
 
@@ -51,11 +52,12 @@ export function resolveRpcProvider(env: Env = process.env): RpcProvider {
       note: 'Private RPC plus the Yellowstone firehose and decoded market data.',
     };
   }
-  if (env.SOLAMI_API_KEY) {
+  const solamiKey = env.SOLAMI_API_KEY ?? env.SOLAMI_RPC_TOKEN;
+  if (solamiKey) {
     return {
       id: 'solami',
       label: 'Solami',
-      url: expand(env.SOLAMI_RPC_TEMPLATE ?? DEFAULT_SOLAMI_TEMPLATE, env.SOLAMI_API_KEY),
+      url: expand(env.SOLAMI_RPC_TEMPLATE ?? DEFAULT_SOLAMI_TEMPLATE, solamiKey),
       keyless: false,
       note: 'Private RPC plus the Yellowstone firehose and decoded market data.',
     };

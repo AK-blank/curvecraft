@@ -162,17 +162,33 @@ export default function PoolsPage() {
         <section className="mt-12 rounded-xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-sm font-semibold text-slate-100">How this snapshot is built</h2>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-400">
-            Free RPC endpoints refuse <span className="font-mono text-slate-300">getProgramAccounts</span>{' '}
-            on the DBC program, so instead of indexing it we walk its recent transactions, collect
-            the accounts they touched, and keep the ones whose Anchor discriminator identifies them
-            as virtual pools. The migration threshold lives on the pool&apos;s config account, so
-            that is fetched too. Snapshots are taken at build time —{' '}
+            {data.discovery?.startsWith('Solami') ? (
+              <>
+                This snapshot asks the endpoint for the pools themselves: a{' '}
+                <span className="font-mono text-slate-300">getProgramAccountsV2</span> call filtered
+                on the VirtualPool discriminator and its 424-byte account size, served by{' '}
+                <span className="font-mono text-slate-300">Solami</span>. A public endpoint refuses
+                that request outright, which is why the fallback walks recent transactions instead
+                and only ever sees whichever pools traded last. The migration threshold lives on the
+                pool&apos;s config account, so that is fetched too.
+              </>
+            ) : (
+              <>
+                Free RPC endpoints refuse <span className="font-mono text-slate-300">getProgramAccounts</span>{' '}
+                on the DBC program, so instead of indexing it we walk its recent transactions, collect
+                the accounts they touched, and keep the ones whose Anchor discriminator identifies them
+                as virtual pools. The migration threshold lives on the pool&apos;s config account, so
+                that is fetched too.
+              </>
+            )}{' '}
+            Snapshots are taken at build time —{' '}
             <span className="font-mono text-slate-300">npm run pools:snapshot</span> — because public
             endpoints block indexed requests from browsers.
           </p>
           <p className="mt-3 font-mono text-[11px] text-slate-500">
             snapshot: {data.fetchedAt} ({timeAgo(data.fetchedAt)}) · provider{' '}
-            {data.provider ?? 'Public mainnet'} · endpoint {data.endpoint}
+            {data.provider ?? 'Public mainnet'} · {data.discovery ?? 'transaction walk'} · endpoint{' '}
+            {data.endpoint}
             {data.warning ? ` · ${data.warning}` : ''}
           </p>
         </section>
