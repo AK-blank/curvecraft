@@ -148,6 +148,112 @@ export const PRESETS: Preset[] = [
       },
     },
   },
+  {
+    id: 'equity-pair',
+    name: 'Tokenized Equity Pair',
+    thesis:
+      'A tokenized stock is the quote asset, so the launch prices discovery against a real-world name instead of SOL. A flat curve holds the price steady while supply sells, which is what a thinly traded equity pair needs — the same primitive serving an asset class that is not a meme.',
+    spec: {
+      name: 'Tokenized Equity Pair',
+      description:
+        'Equity-quoted launch: the quote mint is a tokenized stock (8 decimals). Deep early liquidity keeps the first minutes boring, which is the point when the underlying is a real-world name.',
+      quoteAsset: 'xStock',
+      quoteDecimals: 8,
+      totalSupply: 100_000_000,
+      initialMarketCap: 250_000,
+      migrationMarketCap: 2_000_000,
+      percentageSupplyOnMigration: 25,
+      curveShape: 'flat',
+      feeMode: 'linear',
+      feeSchedule: {
+        startingFeeBps: 100,
+        endingFeeBps: 50,
+        numberOfPeriods: 24,
+        totalDurationSec: 21_600,
+      },
+      dynamicFee: { enabled: false },
+      collectFeeMode: 'quote',
+      migrationTarget: 'dammV2',
+      migrationFeePreset: 100,
+      creatorTradingFeePercentage: 10,
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 80,
+        creatorPermanentLockedLiquidityPercentage: 20,
+      },
+    },
+  },
+  {
+    id: 'rwa-yield',
+    name: 'RWA Yield Pair',
+    thesis:
+      'A treasury-style pair: low fees, most of the supply locked at migration, and a slow curve. Nobody should be day-trading a claim on short-term credit, so the config is built to make churn expensive and holding cheap.',
+    spec: {
+      name: 'RWA Yield Pair',
+      description:
+        'RWA-flavoured launch: USDC quote, 30% of migrated liquidity permanently locked, 24-hour linear fee decay from 1% to 0.4%.',
+      quoteAsset: 'USDC',
+      totalSupply: 500_000_000,
+      initialMarketCap: 500_000,
+      migrationMarketCap: 5_000_000,
+      percentageSupplyOnMigration: 35,
+      curveShape: 'flat',
+      feeMode: 'linear',
+      feeSchedule: {
+        startingFeeBps: 100,
+        endingFeeBps: 40,
+        numberOfPeriods: 24,
+        totalDurationSec: 86_400,
+      },
+      dynamicFee: { enabled: false },
+      collectFeeMode: 'quote',
+      migrationTarget: 'dammV2',
+      migrationFeePreset: 200,
+      creatorTradingFeePercentage: 10,
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 70,
+        creatorPermanentLockedLiquidityPercentage: 30,
+      },
+    },
+  },
+  {
+    id: 'agent-token',
+    name: 'AI Agent Token',
+    thesis:
+      'An agent token has no product to price, only attention, so the launch should discover a price fast and then stop being the story. An exponential curve moves early and flattens into graduation.',
+    spec: {
+      name: 'AI Agent Token',
+      description:
+        'Agent-token launch: exponential curve for fast early discovery, a steep 60-minute fee decay, and 15% locked at migration so the agent has runway.',
+      quoteAsset: 'SOL',
+      totalSupply: 1_000_000_000,
+      initialMarketCap: 300,
+      migrationMarketCap: 6_000,
+      percentageSupplyOnMigration: 18,
+      curveShape: 'exponential',
+      feeMode: 'exponential',
+      feeSchedule: {
+        startingFeeBps: 1_000,
+        endingFeeBps: 100,
+        numberOfPeriods: 12,
+        totalDurationSec: 3_600,
+      },
+      dynamicFee: { enabled: false },
+      collectFeeMode: 'quote',
+      migrationTarget: 'dammV2',
+      migrationFeePreset: 100,
+      creatorTradingFeePercentage: 30,
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 85,
+        creatorPermanentLockedLiquidityPercentage: 15,
+      },
+    },
+  },
 ];
 
 export function getPreset(id: string): Preset | undefined {

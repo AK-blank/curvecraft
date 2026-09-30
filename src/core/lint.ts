@@ -54,9 +54,43 @@ function liquidityOf(spec: LaunchSpec) {
   };
 }
 
+/**
+ * Turn an SDK build failure into something a founder can act on.
+ *
+ * `buildCurveWithMarketCap` throws "Not enough liquidity" when the requested
+ * market-cap range cannot be covered by the configured supply — which happens
+ * when a weighted curve shape is switched back to the single-segment curve, or
+ * when the graduation multiple is too aggressive for the supply.
+ */
+export function explainBuildError(message: string, spec: LaunchSpec): string {
+  if (/not enough liquidity/i.test(message)) {
+    return [
+      `The ${spec.curveShape && spec.curveShape !== 'marketCap' ? spec.curveShape : 'market-cap'} curve cannot reach ${spec.migrationMarketCap.toLocaleString('en-US')} ${spec.quoteAsset} from ${spec.initialMarketCap.toLocaleString('en-US')} with ${spec.totalSupply.toLocaleString('en-US')} tokens in supply.`,
+      'The segments would need more tokens than exist. Raise the graduation market cap, increase supply, lower the start market cap, or pick a different curve shape.',
+    ].join(' ');
+  }
+  return message;
+}
+
 export function lintSpec(spec: LaunchSpec): LintResult {
   const items: LintItem[] = [];
-  const config = toConfigParams(spec) as unknown as {
+  let config: ReturnType<typeof toConfigParams>;
+  try {
+    config = toConfigParams(spec);
+  } catch (error) {
+    return {
+      ok: false,
+      items: [
+        {
+          id: 'compile',
+          level: 'error',
+          title: 'This configuration cannot be compiled',
+          detail: explainBuildError((error as Error).message, spec),
+        },
+      ],
+    };
+  }
+  const compiled = config as unknown as {
     curve: Array<{ sqrtPrice: unknown; liquidity: unknown }>;
     sqrtStartPrice: unknown;
     poolFees: unknown;
@@ -119,7 +153,7 @@ export function lintSpec(spec: LaunchSpec): LintResult {
 
   let curveOk = false;
   try {
-    curveOk = validateCurve(config.curve as never, config.sqrtStartPrice as never);
+    curveOk = validateCurve(compiled.curve as never, compiled.sqrtStartPrice as never);
   } catch {
     curveOk = false;
   }
@@ -129,7 +163,7 @@ export function lintSpec(spec: LaunchSpec): LintResult {
           id: 'curve',
           level: 'pass',
           title: 'Curve is well formed',
-          detail: `${config.curve?.length ?? 0} curve point(s), monotonically increasing above the start price.`,
+          detail: `${compiled.curve?.length ?? 0} curve point(s), monotonically increasing above the start price.`,
         }
       : {
           id: 'curve',
@@ -143,9 +177,9 @@ export function lintSpec(spec: LaunchSpec): LintResult {
   let feesOk = false;
   try {
     feesOk = validatePoolFees(
-      config.poolFees as never,
-      config.collectFeeMode,
-      config.activationType,
+      compiled.poolFees as never,
+      compiled.collectFeeMode,
+      compiled.activationType,
     );
   } catch {
     feesOk = false;
@@ -169,9 +203,9 @@ export function lintSpec(spec: LaunchSpec): LintResult {
   let newPoolOk = true;
   try {
     assertConfigAllowsNewPool({
-      baseFeeMode: (config.poolFees as { baseFee?: { baseFeeMode?: number } })?.baseFee
+      baseFeeMode: (compiled.poolFees as { baseFee?: { baseFeeMode?: number } })?.baseFee
         ?.baseFeeMode as number,
-      migrationOption: config.migrationOption,
+      migrationOption: compiled.migrationOption,
     });
   } catch (error) {
     newPoolOk = false;

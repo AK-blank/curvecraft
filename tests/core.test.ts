@@ -13,7 +13,7 @@ import { toCreateConfigScript } from '@/core/codegen';
 import { specFromPoolConfig } from '@/core/livepools';
 import { redactEndpoint, resolveRpcProvider } from '@/core/providers';
 import { toLaunchReport } from '@/core/report';
-import { lintSpec } from '@/core/lint';
+import { explainBuildError, lintSpec } from '@/core/lint';
 import { monteCarlo } from '@/core/montecarlo';
 import { PRESETS, getPreset } from '@/core/presets';
 import { scaledScenarios, steadyDemand } from '@/core/scenarios';
@@ -377,10 +377,18 @@ describe('launch report', () => {
     expect(report).not.toContain('undefined');
   });
 
-  it('renders for every preset and every curve shape', () => {
+  it('renders for every preset and every compilable curve shape', () => {
+    // Some shape/supply combinations cannot be compiled at all (a weighted curve
+    // switched back to a single segment can need more tokens than exist). Those
+    // must fail loudly in the lint, not silently in the report.
     for (const preset of PRESETS) {
-      for (const shape of ['marketCap', 'flat', 'exponential'] as const) {
+      for (const shape of ['marketCap', 'flat', 'linear', 'exponential'] as const) {
         const spec = { ...structuredClone(preset.spec), curveShape: shape };
+        const lint = lintSpec(spec);
+        if (!lint.ok && lint.items.some((item) => item.id === 'compile')) {
+          expect(lint.items[0].detail, `${preset.name}/${shape}`).toMatch(/cannot reach|different curve shape/i);
+          continue;
+        }
         const report = toLaunchReport({ spec, analysis: analyze(spec), monteCarlo: null });
         expect(report.length, `${preset.name}/${shape}`).toBeGreaterThan(800);
         expect(report).not.toContain('NaN');
@@ -489,5 +497,26 @@ describe('rebuilding a design from a live pool', () => {
 
   it('returns null rather than guessing when the config is incomplete', () => {
     expect(specFromPoolConfig({}, { address: 'x', creator: 'y', progressPct: 0 })).toBeNull();
+  });
+});
+
+describe('uncompilable configurations', () => {
+  it('explains the supply problem instead of surfacing the SDK error', () => {
+    const spec = {
+      ...structuredClone(PRESETS.find((p) => p.id === 'equity-pair')!.spec),
+      curveShape: 'marketCap' as const,
+    };
+    const lint = lintSpec(spec);
+
+    expect(lint.ok).toBe(false);
+    expect(lint.items[0].id).toBe('compile');
+    expect(lint.items[0].detail).toContain('cannot reach');
+    expect(lint.items[0].detail).toContain('different curve shape');
+    // The raw SDK text is not what a founder should see.
+    expect(explainBuildError('Not enough liquidity', spec)).not.toBe('Not enough liquidity');
+  });
+
+  it('leaves unrelated errors alone', () => {
+    expect(explainBuildError('Some other failure', fairLaunch)).toBe('Some other failure');
   });
 });

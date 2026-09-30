@@ -8,7 +8,13 @@
  */
 
 /** Quote asset a launch is denominated in. */
-export type QuoteAsset = 'SOL' | 'USDC';
+/**
+ * What the launch is priced in. `SOL` and `USDC` are the two Meteora ships with,
+ * but a DBC config takes any quote mint — tokenized equities, T-bills, another
+ * project's token — which is how the same curve primitive ends up serving asset
+ * classes beyond memes. Anything other than SOL/USDC carries its own decimals.
+ */
+export type QuoteAsset = 'SOL' | 'USDC' | (string & {});
 
 /** How the base fee decays over the launch. */
 export type FeeMode = 'linear' | 'exponential' | 'rateLimiter';
@@ -73,6 +79,12 @@ export interface LaunchSpec {
   description?: string;
 
   quoteAsset: QuoteAsset;
+  /**
+   * Quote token decimals. Defaults to 6 for USDC and 9 for everything else, so
+   * a non-stablecoin quote (a tokenized stock with 8 decimals, say) must say so
+   * or every price in the report will be off by a power of ten.
+   */
+  quoteDecimals?: number;
   /** Base token supply (whole tokens, before decimals). */
   totalSupply: number;
   /** Fully-diluted valuation at the first curve price, in quote units. */

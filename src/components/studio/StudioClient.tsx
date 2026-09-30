@@ -115,7 +115,8 @@ export default function StudioClient() {
         setData(payload as unknown as SimulateResponse);
         setActiveRun(0);
       } catch (err) {
-        setError((err as Error).message);
+        const { explainBuildError } = await import('@/core/lint');
+        setError(explainBuildError((err as Error).message, nextSpec));
       } finally {
         setLoading(false);
       }

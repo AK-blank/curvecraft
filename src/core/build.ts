@@ -24,7 +24,18 @@ import type { CurvePointView, LaunchSpec, SpecDerivedLike } from './types';
 
 /** Quote token decimals: SOL has 9, USDC has 6. */
 export function quoteDecimals(spec: LaunchSpec): number {
+  if (spec.quoteDecimals !== undefined) return spec.quoteDecimals;
   return spec.quoteAsset === 'USDC' ? 6 : 9;
+}
+
+/** Quote mints the SDK knows by name; anything else is passed through by the launch script. */
+const KNOWN_QUOTE_MINTS: Record<string, string> = {
+  SOL: 'So11111111111111111111111111111111111111112',
+  USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+};
+
+export function isKnownQuoteMint(asset: string): boolean {
+  return asset in KNOWN_QUOTE_MINTS;
 }
 
 const MIGRATION_FEE_OPTION: Record<number, MigrationFeeOption> = {

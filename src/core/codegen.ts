@@ -13,10 +13,18 @@ function num(value: number): string {
   return value.toLocaleString('en-US').replace(/,/g, '_');
 }
 
+const KNOWN_MINTS: Record<string, string> = {
+  SOL: 'So11111111111111111111111111111111111111112',
+  USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+};
+
 function quoteMintOf(spec: LaunchSpec): string {
-  return spec.quoteAsset === 'USDC'
-    ? 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-    : 'So11111111111111111111111111111111111111112';
+  return KNOWN_MINTS[spec.quoteAsset] ?? spec.quoteAsset;
+}
+
+/** A quote asset the SDK does not ship a mint constant for. */
+function isCustomQuote(spec: LaunchSpec): boolean {
+  return !(spec.quoteAsset in KNOWN_MINTS);
 }
 
 /** `client.partner.createConfig()` script for this launch spec. */
@@ -82,7 +90,7 @@ async function main() {
     feeClaimer: payer.publicKey,
     leftoverReceiver: payer.publicKey,
     payer: payer.publicKey,
-    quoteMint: new PublicKey('${quoteMintOf(spec)}'),
+    quoteMint: new PublicKey('${quoteMintOf(spec)}'),${isCustomQuote(spec) ? ` // TODO: replace with the ${spec.quoteAsset} mint address` : ''}
   });
 
   transaction.feePayer = payer.publicKey;
@@ -103,12 +111,18 @@ main().catch((error) => {
 `;
 }
 
+/** Quote decimals as a literal number, since TokenDecimal has no constant for 8 or 18. */
+function quoteDecimalsLiteral(spec: LaunchSpec): string {
+  const decimals = spec.quoteDecimals ?? (spec.quoteAsset === 'USDC' ? 6 : 9);
+  return decimals === 6 ? 'TokenDecimal.SIX' : decimals === 9 ? 'TokenDecimal.NINE' : String(decimals);
+}
+
 function baseParams(spec: LaunchSpec): string {
   const shape = spec.curveShape ?? 'marketCap';
   return `    token: {
       tokenType: TokenType.SPLToken,
       tokenBaseDecimal: TokenDecimal.SIX,
-      tokenQuoteDecimal: TokenDecimal.${spec.quoteAsset === 'USDC' ? 'SIX' : 'NINE'},
+      tokenQuoteDecimal: ${quoteDecimalsLiteral(spec)},
       tokenAuthorityOption: TokenAuthorityOption.CreatorUpdateAuthority,
       totalTokenSupply: ${num(spec.totalSupply)},
       leftover: ${num(leftoverFor(spec))},
