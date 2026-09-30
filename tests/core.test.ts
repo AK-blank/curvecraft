@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { deriveSpec, toConfigParams } from '@/core/build';
+import { toCreateConfigScript } from '@/core/codegen';
 import { lintSpec } from '@/core/lint';
 import { monteCarlo } from '@/core/montecarlo';
 import { PRESETS, getPreset } from '@/core/presets';
@@ -277,5 +278,54 @@ describe('curve shapes', () => {
     const spec = withSpec({ curveShape: 'flat' });
     const config = toConfigParams(spec) as unknown as { curve: unknown[] };
     expect(config.curve.length).toBe(16);
+  });
+});
+
+describe('launch script export', () => {
+  it('emits a script that actually creates and sends the config', () => {
+    const script = toCreateConfigScript(fairLaunch);
+
+    // The config account needs its own keypair, and createConfig returns a
+    // transaction that must be signed and sent — the earlier version of this
+    // generator got both wrong and would have thrown on the first run.
+    expect(script).toContain('const configKeypair = Keypair.generate();');
+    expect(script).toContain('...curveConfig,');
+    expect(script).toContain('config: configKeypair.publicKey,');
+    expect(script).toContain('leftoverReceiver: payer.publicKey,');
+    expect(script).toContain('transaction.sign(payer, configKeypair);');
+    expect(script).toContain('sendRawTransaction');
+    expect(script).toContain('confirmTransaction');
+    expect(script).not.toContain('const { config } =');
+  });
+
+  it('picks the SDK builder that matches the curve shape', () => {
+    const market = toCreateConfigScript(fairLaunch);
+    expect(market).toContain('buildCurveWithMarketCap({');
+    expect(market).not.toContain('buildCurveWithLiquidityWeights');
+
+    const flat = toCreateConfigScript(withSpec({ curveShape: 'flat' }));
+    expect(flat).toContain('buildCurveWithLiquidityWeights({');
+    expect(flat).toContain('liquidityWeights: [');
+    // Weighted curves need the leftover buffer the builder asserts on.
+    expect(flat).toMatch(/leftover: [1-9]/);
+  });
+
+  it('points at the right quote mint for the quote asset', () => {
+    expect(toCreateConfigScript(fairLaunch)).toContain(
+      'So11111111111111111111111111111111111111112',
+    );
+    const usdc = getPreset('stable-pair')!.spec;
+    expect(toCreateConfigScript(usdc)).toContain(
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    );
+  });
+
+  it('emits balanced braces for every preset', () => {
+    for (const preset of PRESETS) {
+      const script = toCreateConfigScript(preset.spec);
+      const opens = (script.match(/\(/g) ?? []).length;
+      const closes = (script.match(/\)/g) ?? []).length;
+      expect(opens, `${preset.name} parens`).toBe(closes);
+    }
   });
 });

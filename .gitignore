@@ -42,3 +42,6 @@ next-env.d.ts
 
 # static export output
 /out
+
+# emitted launch scripts used for type-checking
+/scripts/generated
