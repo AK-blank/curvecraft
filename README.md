@@ -56,10 +56,10 @@ scenario ──► for each trade ──► swapQuote2(virtualPool, config, amou
 
 | Preset | Effective fee (organic) | Effective fee (sniper wave) | Sniper tax |
 |---|---|---|---|
-| Fair Launch (2% → 1% linear, 20 periods, 2h) | 1.32% | 1.34% | +1.5% |
-| Meme Speedrun (20% → 1% exponential, 12 periods, 30m) | 2.48% | 3.02% | **+21.8%** |
-| Deep Migration (2.5% → 1.2% linear, 16 periods, 4h) | 1.84% | 1.85% | +0.5% |
-| Stablecoin Pair (1.5% → 0.8% linear, 24 periods, 24h) | 1.19% | 1.19% | 0% |
+| Fair Launch (2% → 1% linear, 20 periods, 2h) | 1.323% | 1.336% | +1.0% |
+| Meme Speedrun (20% → 1% exponential, 12 periods, 30m) | 2.481% | 3.019% | **+21.7%** |
+| Deep Migration (2.5% → 1.2% linear, 16 periods, 4h) | 1.839% | 1.847% | +0.4% |
+| Stablecoin Pair (1.5% → 0.8% linear, 24 periods, 24h) | 1.192% | 1.193% | +0.0% |
 
 A slow linear decay barely changes what snipers pay. A short, steep exponential decay does — at the
 cost of charging organic buyers 2.5× more than the flat schedule. That trade-off is the design
