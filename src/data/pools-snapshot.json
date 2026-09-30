@@ -1,25 +1,25 @@
 {
   "pools": [
     {
-      "address": "391tdXUKfp1U9pwpteTc3gLrgiBBd49iFzexMQWGjxZy",
-      "baseMint": "BKGpQYsbQBYsJzJsEny71auTbczWXuFRwSY7qcVNrSkh",
-      "creator": "DyLqanrFCkmbJqrHYw4HcPLcdayzCokemUmFbf5ZsQX5",
-      "config": "3mDSxat7hMmhQ41wQEyJJdufhN7j2Kd6oeNWEn8jfZF2",
-      "quoteReserve": 8.683038392,
-      "migrationQuoteThreshold": 11.53,
-      "progressPct": 75.30822542931483,
+      "address": "H5rfMCmML7DjMkpX8CbQ7PrkGj8LaSk6CqtGEbPRWFts",
+      "baseMint": "BUc4bkZc53pW1P29TS5Tt5DJTAbsSCA4ndVZfyzcBhoN",
+      "creator": "5nXjNMTi54LwfP11ZdXeJT7BHz26wA7kHXeu8oGTF2m5",
+      "config": "CpRaezkuHkvdcBCu3jjmiMyx9JJf9ybbtrQjoWnbPFGA",
+      "quoteReserve": 9.981933765,
+      "migrationQuoteThreshold": 10.98,
+      "progressPct": 90.91014357923498,
       "isMigrated": false,
-      "baseReserve": 937168177.214225,
-      "quoteVault": "96rgKKrH6kLBrebnQgQu2NKLn264aoMmT7uPCxUH2qra",
-      "activationPoint": 451983760,
+      "baseReserve": 976627416.300591,
+      "quoteVault": "D9grN2ciTSTCFKwz6RoJDNsn8b9Y4Yx69n5yGPigThq2",
+      "activationPoint": 451985017,
       "design": {
-        "name": "Live pool 391tdX…jxZy",
-        "description": "Reconstructed from the on-chain config of pool 391tdXUKfp1U9pwpteTc3gLrgiBBd49iFzexMQWGjxZy (creator DyLqanrF…, 75% of its raise at snapshot time). Market caps, supply and the liquidity split are exact; the fee schedule is modelled as a flat 0.25% because the program packs a decaying schedule into the config account.",
+        "name": "Live pool H5rfMC…WFts",
+        "description": "Reconstructed from the on-chain config of pool H5rfMCmML7DjMkpX8CbQ7PrkGj8LaSk6CqtGEbPRWFts (creator 5nXjNMTi…, 91% of its raise at snapshot time). Start price, graduation price, supply and the current on-chain base fee are exact. The fee schedule is modelled as a flat 0.25% because the program packs a decaying schedule into the config account. The live pool needs 10.98 SOL to graduate; rebuilding the same two prices with the default market-cap curve needs 219.60. That gap is the curve layout, and it is the parameter launches most often get wrong.",
         "quoteAsset": "SOL",
         "totalSupply": 1000000000,
-        "initialMarketCap": 65.60601906562421,
-        "migrationMarketCap": 400.00000000000006,
-        "percentageSupplyOnMigration": 3,
+        "initialMarketCap": 408.80128705065965,
+        "migrationMarketCap": 449.9999999999999,
+        "percentageSupplyOnMigration": 2,
         "feeMode": "linear",
         "feeSchedule": {
           "startingFeeBps": 25,
@@ -43,29 +43,29 @@
       }
     },
     {
-      "address": "BuEPDFVTtQkcsXJ5VW9Vr9Yqoa4cKLJzine1d13tRhGL",
-      "baseMint": "4sN2QiT1qeN6QmQP8zTWSrNAn3qMV82Px4TEtytJ3X2a",
-      "creator": "AkW5qYsY1BawNP6NDufvpz6hds12W9SWAg3W8jDLWQZb",
-      "config": "6m7XSKNZtiMz3yXfAk8QK5dejQb4aMHjc4bQrqi8h4VD",
-      "quoteReserve": 8.256950364,
-      "migrationQuoteThreshold": 10.95,
-      "progressPct": 75.40593939726028,
+      "address": "gQtqomfk4xbJL6ySV2ZmiwJoDaBfzDH1zEdMB8AGv5M",
+      "baseMint": "4TrqirADkToib9gHKy7ayM53vmwGEDC733dnfRwh2GCf",
+      "creator": "6qWLNXKeKtz3rDupjfnMYdfqZYw7hazjMwJGfWDPAcZX",
+      "config": "YjRgMvwnPkiVhLMT7BtUeVFbB3EbQBdYRNCQeeeBTnu",
+      "quoteReserve": 13.159564148,
+      "migrationQuoteThreshold": 15,
+      "progressPct": 87.73042765333334,
       "isMigrated": false,
-      "baseReserve": 977595143.73468,
-      "quoteVault": "6tsMuPsMvmfekN5LZUnyRLz6HiSsn31G3md7KLQ6Xyre",
-      "activationPoint": 451983873,
+      "baseReserve": 990385716.406156,
+      "quoteVault": "3LqZhH7rpgJzqYeV2mRZJMcK1B3hTm2EuKxBeFa8p3CX",
+      "activationPoint": 451984416,
       "design": {
-        "name": "Live pool BuEPDF…RhGL",
-        "description": "Reconstructed from the on-chain config of pool BuEPDFVTtQkcsXJ5VW9Vr9Yqoa4cKLJzine1d13tRhGL (creator AkW5qYsY…, 75% of its raise at snapshot time). Market caps, supply and the liquidity split are exact; the fee schedule is modelled as a flat 0.25% because the program packs a decaying schedule into the config account.",
+        "name": "Live pool gQtqom…Gv5M",
+        "description": "Reconstructed from the on-chain config of pool gQtqomfk4xbJL6ySV2ZmiwJoDaBfzDH1zEdMB8AGv5M (creator 6qWLNXKe…, 88% of its raise at snapshot time). Start price, graduation price, supply and the current on-chain base fee are exact. The fee schedule is modelled as a flat 1.00% because the program packs a decaying schedule into the config account. The live pool needs 15.00 SOL to graduate; rebuilding the same two prices with the default market-cap curve needs 718.72. That gap is the curve layout, and it is the parameter launches most often get wrong.",
         "quoteAsset": "SOL",
         "totalSupply": 1000000000,
-        "initialMarketCap": 303.7005722847673,
-        "migrationMarketCap": 500,
-        "percentageSupplyOnMigration": 2,
+        "initialMarketCap": 1274.9999999999998,
+        "migrationMarketCap": 1497.6827108676896,
+        "percentageSupplyOnMigration": 1,
         "feeMode": "linear",
         "feeSchedule": {
-          "startingFeeBps": 25,
-          "endingFeeBps": 25,
+          "startingFeeBps": 100,
+          "endingFeeBps": 100,
           "numberOfPeriods": 0,
           "totalDurationSec": 0
         },
@@ -77,9 +77,135 @@
         "migrationFeePreset": 600,
         "creatorTradingFeePercentage": 0,
         "liquidityDistribution": {
+          "partnerLiquidityPercentage": 88,
+          "partnerPermanentLockedLiquidityPercentage": 12,
+          "creatorLiquidityPercentage": 0,
+          "creatorPermanentLockedLiquidityPercentage": 0
+        }
+      }
+    },
+    {
+      "address": "87Hg2xvAaZ4MfWjQkWCZpMFqetypDrsdartiP6W3cWNX",
+      "baseMint": "EaCemtzdvGqs93uusavSkcQPnz55zY8vCvs2YMoNLFoB",
+      "creator": "EjSczVqHdiDrgU3oeif2tE3Ea3smeS97heWaD7wEKp8B",
+      "config": "CvstDWQW4dSr5xgXxHghniCRVrg7CXtefc5boRMEtfuq",
+      "quoteReserve": 5.427408066,
+      "migrationQuoteThreshold": 35.3704194,
+      "progressPct": 15.344483209605366,
+      "isMigrated": false,
+      "baseReserve": 735815531.532609,
+      "quoteVault": "E3jgYsRgLQac4AG4Pzop6QXnYBJqhCt9G3H8tkyqz8Qi",
+      "activationPoint": 1790772932,
+      "design": {
+        "name": "Live pool 87Hg2x…cWNX",
+        "description": "Reconstructed from the on-chain config of pool 87Hg2xvAaZ4MfWjQkWCZpMFqetypDrsdartiP6W3cWNX (creator EjSczVqH…, 15% of its raise at snapshot time). Start price, graduation price, supply and the current on-chain base fee are exact. The fee schedule is modelled as a flat 2.00% because the program packs a decaying schedule into the config account. The live pool needs 35.37 SOL to graduate; rebuilding the same two prices with the default market-cap curve needs 34.92. That gap is the curve layout, and it is the parameter launches most often get wrong.",
+        "quoteAsset": "SOL",
+        "totalSupply": 1000000000,
+        "initialMarketCap": 15.79760196030641,
+        "migrationMarketCap": 138.22901004208413,
+        "percentageSupplyOnMigration": 24,
+        "feeMode": "linear",
+        "feeSchedule": {
+          "startingFeeBps": 200,
+          "endingFeeBps": 200,
+          "numberOfPeriods": 0,
+          "totalDurationSec": 0
+        },
+        "dynamicFee": {
+          "enabled": false
+        },
+        "collectFeeMode": "output",
+        "migrationTarget": "dammV2",
+        "migrationFeePreset": 600,
+        "creatorTradingFeePercentage": 0,
+        "liquidityDistribution": {
           "partnerLiquidityPercentage": 0,
-          "partnerPermanentLockedLiquidityPercentage": 0,
-          "creatorLiquidityPercentage": 89,
+          "partnerPermanentLockedLiquidityPercentage": 100,
+          "creatorLiquidityPercentage": 0,
+          "creatorPermanentLockedLiquidityPercentage": 0
+        }
+      }
+    },
+    {
+      "address": "7Ewwj1XQnmPtFtQ2wwJ9HqBHAwvwpm3ZnAD3S8DxwA3M",
+      "baseMint": "69HgHbsL3cquuRUK9nA7FsokdaFNS4uB7KVnQJXkmgan",
+      "creator": "Crzc9hS8FnEoc85hzWcLbuWSd4YrDwayvKd4KU99KcLN",
+      "config": "2XyKhFogGgEQVFtyMce6UqkHMSvsa8ME3VEcXvYnm5Gz",
+      "quoteReserve": 95.256378335,
+      "migrationQuoteThreshold": 100,
+      "progressPct": 95.256378335,
+      "isMigrated": false,
+      "baseReserve": 209837234.390458,
+      "quoteVault": "AcUZz3xBufmhHiMa2YtqZSYwPz9j3NkYdeng7MVY5J3U",
+      "activationPoint": 451977234,
+      "design": {
+        "name": "Live pool 7Ewwj1…wA3M",
+        "description": "Reconstructed from the on-chain config of pool 7Ewwj1XQnmPtFtQ2wwJ9HqBHAwvwpm3ZnAD3S8DxwA3M (creator Crzc9hS8…, 95% of its raise at snapshot time). Start price, graduation price, supply and the current on-chain base fee are exact. The fee schedule is modelled as a flat 1.00% because the program packs a decaying schedule into the config account. The live pool needs 100.00 SOL to graduate; rebuilding the same two prices with the default market-cap curve needs 100.00. That gap is the curve layout, and it is the parameter launches most often get wrong.",
+        "quoteAsset": "SOL",
+        "totalSupply": 1000000000,
+        "initialMarketCap": 31.250000813085553,
+        "migrationMarketCap": 500,
+        "percentageSupplyOnMigration": 20,
+        "feeMode": "linear",
+        "feeSchedule": {
+          "startingFeeBps": 100,
+          "endingFeeBps": 100,
+          "numberOfPeriods": 0,
+          "totalDurationSec": 0
+        },
+        "dynamicFee": {
+          "enabled": false
+        },
+        "collectFeeMode": "output",
+        "migrationTarget": "dammV2",
+        "migrationFeePreset": 30,
+        "creatorTradingFeePercentage": 0,
+        "liquidityDistribution": {
+          "partnerLiquidityPercentage": 0,
+          "partnerPermanentLockedLiquidityPercentage": 100,
+          "creatorLiquidityPercentage": 0,
+          "creatorPermanentLockedLiquidityPercentage": 0
+        }
+      }
+    },
+    {
+      "address": "5DP5jyuNLn35HLwS4k6q1FxUrfYDCBC6iYPJgxY2wNkz",
+      "baseMint": "9qntb6zZR8tvuo4Pvwdz6cpeGMvQuhmsvQtFcRNyMgan",
+      "creator": "9Ff7bAqJP9tsRC3XNK42DKYer9MhVgz4i4k3Dbk8pgTJ",
+      "config": "2XyKhFogGgEQVFtyMce6UqkHMSvsa8ME3VEcXvYnm5Gz",
+      "quoteReserve": 74.717589579,
+      "migrationQuoteThreshold": 100,
+      "progressPct": 74.717589579,
+      "isMigrated": false,
+      "baseReserve": 262396294.737253,
+      "quoteVault": "CnjEvUSk9BsxFfuyPqEP8UZfVDzP6VFHwbHFq2oYLUHJ",
+      "activationPoint": 451979088,
+      "design": {
+        "name": "Live pool 5DP5jy…wNkz",
+        "description": "Reconstructed from the on-chain config of pool 5DP5jyuNLn35HLwS4k6q1FxUrfYDCBC6iYPJgxY2wNkz (creator 9Ff7bAqJ…, 75% of its raise at snapshot time). Start price, graduation price, supply and the current on-chain base fee are exact. The fee schedule is modelled as a flat 1.00% because the program packs a decaying schedule into the config account. The live pool needs 100.00 SOL to graduate; rebuilding the same two prices with the default market-cap curve needs 100.00. That gap is the curve layout, and it is the parameter launches most often get wrong.",
+        "quoteAsset": "SOL",
+        "totalSupply": 1000000000,
+        "initialMarketCap": 31.250000813085553,
+        "migrationMarketCap": 500,
+        "percentageSupplyOnMigration": 20,
+        "feeMode": "linear",
+        "feeSchedule": {
+          "startingFeeBps": 100,
+          "endingFeeBps": 100,
+          "numberOfPeriods": 0,
+          "totalDurationSec": 0
+        },
+        "dynamicFee": {
+          "enabled": false
+        },
+        "collectFeeMode": "output",
+        "migrationTarget": "dammV2",
+        "migrationFeePreset": 30,
+        "creatorTradingFeePercentage": 0,
+        "liquidityDistribution": {
+          "partnerLiquidityPercentage": 0,
+          "partnerPermanentLockedLiquidityPercentage": 100,
+          "creatorLiquidityPercentage": 0,
           "creatorPermanentLockedLiquidityPercentage": 0
         }
       }
@@ -88,5 +214,5 @@
   "scannedTransactions": 16,
   "endpoint": "https://api.mainnet-beta.solana.com",
   "provider": "Custom endpoint",
-  "fetchedAt": "2026-09-30T13:54:32.959Z"
+  "fetchedAt": "2026-09-30T13:59:43.670Z"
 }

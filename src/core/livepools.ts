@@ -23,6 +23,7 @@ import {
   DynamicBondingCurveClient,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 
+import { deriveSpec, toConfigParams } from './build';
 import { redactEndpoint, resolveRpcProvider } from './providers';
 import type { LaunchSpec } from './types';
 
@@ -150,7 +151,7 @@ function num(value: unknown): number {
  */
 export function specFromPoolConfig(
   config: ConfigState,
-  pool: { address: string; creator: string; progressPct: number },
+  pool: { address: string; creator: string; progressPct: number; liveThreshold?: number },
 ): LaunchSpec | null {
   const quoteMint = config.quoteMint?.toBase58?.() ?? WRAPPED_SOL;
   const quoteAsset = quoteMint === USDC_MINT ? 'USDC' : 'SOL';
@@ -181,7 +182,7 @@ export function specFromPoolConfig(
 
   const spec: LaunchSpec = {
     name: `Live pool ${pool.address.slice(0, 6)}…${pool.address.slice(-4)}`,
-    description: `Reconstructed from the on-chain config of pool ${pool.address} (creator ${pool.creator.slice(0, 8)}…, ${pool.progressPct.toFixed(0)}% of its raise at snapshot time). Start and graduation market cap, supply and the current on-chain base fee are exact; the fee schedule is modelled as a flat ${(feeBps / 100).toFixed(2)}% because the program packs a decaying schedule into the config account, and rebuilding the curve through those two prices will not reproduce the original segment layout byte for byte.`,
+    description: '',
     quoteAsset,
     totalSupply,
     initialMarketCap: startPrice * totalSupply,
@@ -208,6 +209,26 @@ export function specFromPoolConfig(
         config.creatorPermanentLockedLiquidityPercentage ?? 0,
     },
   };
+
+  // The one number a fork cannot reproduce: the original curve layout. Saying so
+  // with both figures turns the gap into the lesson (curve layout, not market
+  // caps, decides the raise) instead of a silent inaccuracy.
+  let rebuiltThreshold = 0;
+  try {
+    rebuiltThreshold = deriveSpec(spec, toConfigParams(spec)).migrationQuoteThreshold;
+  } catch {
+    rebuiltThreshold = 0;
+  }
+  const liveThreshold = pool.liveThreshold ?? 0;
+
+  spec.description = [
+    `Reconstructed from the on-chain config of pool ${pool.address} (creator ${pool.creator.slice(0, 8)}…, ${pool.progressPct.toFixed(0)}% of its raise at snapshot time).`,
+    'Start price, graduation price, supply and the current on-chain base fee are exact.',
+    `The fee schedule is modelled as a flat ${(feeBps / 100).toFixed(2)}% because the program packs a decaying schedule into the config account.`,
+    liveThreshold > 0 && rebuiltThreshold > 0
+      ? `The live pool needs ${liveThreshold.toFixed(2)} ${quoteAsset} to graduate; rebuilding the same two prices with the default market-cap curve needs ${rebuiltThreshold.toFixed(2)}. That gap is the curve layout, and it is the parameter launches most often get wrong.`
+      : 'The original curve layout is not reproduced exactly.',
+  ].join(' ');
 
   return spec;
 }
@@ -297,6 +318,7 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
             address,
             creator: poolState.creator?.toBase58() ?? 'unknown',
             progressPct,
+            liveThreshold: threshold,
           }) ?? undefined;
       }
     } catch {
