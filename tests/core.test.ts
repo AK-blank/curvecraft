@@ -329,3 +329,19 @@ describe('launch script export', () => {
     }
   });
 });
+
+describe('mainnet-facing guarantees', () => {
+  it('the SDK refuses the 100/0 split that would fail on chain', () => {
+    // buildCurveWithMarketCap itself throws for this config, which is why the
+    // lint exists: the failure has to be caught in the studio, not at deploy.
+    const naive = withSpec({
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 100,
+        creatorPermanentLockedLiquidityPercentage: 0,
+      },
+    });
+    expect(() => toConfigParams(naive)).toThrow(/locked liquidity/i);
+  });
+});

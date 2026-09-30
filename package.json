@@ -10,7 +10,9 @@
     "test": "vitest run",
     "sim": "tsx scripts/sim.ts",
     "pools": "tsx scripts/live-pools.ts",
-    "shapes": "tsx scripts/curve-shapes.ts"
+    "shapes": "tsx scripts/curve-shapes.ts",
+    "verify:mainnet": "node --use-env-proxy --import tsx scripts/mainnet-simulate.ts",
+    "emit": "tsx scripts/emit-launch.ts"
   },
   "dependencies": {
     "@meteora-ag/dynamic-bonding-curve-sdk": "^1.5.13",

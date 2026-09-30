@@ -126,6 +126,26 @@ The lint now runs the SDK's own validators (`validateMinimumLockedLiquidity`, `v
 `tests/core.test.ts` asserts that every preset in the marketplace passes. A config UI cannot infer
 these rules; a launch tool that does not check them is a liability.
 
+## Verified against the program, not just against itself
+
+Simulating a launch in a browser proves the simulator is self-consistent. To
+prove the *output* is deployable, `npm run verify:mainnet` builds the exact
+transaction the generated launch script builds and simulates it against mainnet
+state (funded fee payer, `sigVerify: false`, nothing spent). The DBC program runs
+for real:
+
+```
+Program log: Instruction: CreateConfig
+Program dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN success
+err: null
+```
+
+And the split a designer reaches for first — 100% liquid, 0% permanently locked —
+is rejected by the program (at least 10% must be locked at day 1). Four of our own
+presets shipped that mistake before the launch check existed; they are fixed and
+the test suite keeps them fixed. Details, logs and caveats:
+[docs/verification.md](docs/verification.md).
+
 ## Tests
 
 ```bash
