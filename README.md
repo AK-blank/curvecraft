@@ -205,6 +205,16 @@ src/app/studio          the studio UI
 scripts/sim.ts          CLI
 ```
 
+## Documentation
+
+| Doc | What it covers |
+|---|---|
+| [docs/findings.md](docs/findings.md) | The five measured results, with tables and method |
+| [docs/verification.md](docs/verification.md) | How the exported config is checked against the real program |
+| [docs/submission.md](docs/submission.md) | Submission copy, track fit, links |
+| [docs/demo-script.md](docs/demo-script.md) | Shot-by-shot demo video script |
+| [docs/pitch.md](docs/pitch.md) | Ten-slide pitch outline |
+
 ## Roadmap
 
 - Preset marketplace: publish and vote on community configs (URL sharing and head-to-head
