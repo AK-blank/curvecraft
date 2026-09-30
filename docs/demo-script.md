@@ -1,6 +1,6 @@
 # CurveCraft — 3 minute demo script
 
-Target: **2:50–3:10**. Screen recording with voiceover. Everything on screen is the live app.
+Target: **3:10–3:30**. Screen recording with voiceover. Everything on screen is the live app.
 
 Setup before recording:
 
@@ -40,7 +40,16 @@ and chart update.
 
 > "Now the fee schedule. Start at 20%, decay exponentially to 1% over 30 minutes."
 
-## 0:55 — 1:40 · Replay the launch
+## 0:55 — 1:15 · Curve shape
+
+**Screen:** click **Flat** in the Curve shape row. The raise target drops from 1,600 to 1,172 SOL.
+
+> "One more lever before I replay anything: the shape of the curve. Same start market cap, same
+> graduation target — a flat curve keeps the price down while supply sells, so it reaches the same
+> valuation with 27% less capital. Switch to exponential and it needs 33% more. Nobody can see that
+> from the two numbers a launch announcement quotes."
+
+## 1:15 — 2:00 · Replay the launch
 
 **Screen:** click through the three scenario tabs — Organic grind, Sniper wave then organic, Whale
 buys then dumps. Hover the chart at a couple of points.
@@ -62,7 +71,7 @@ buys then dumps. Hover the chart at a couple of points.
 > With the default two-percent schedule, the same sniper wave pays a 1% premium. Basically nothing.
 > A two-hour fee decay is a fee increase with extra steps."
 
-## 1:40 — 2:20 · From three scenarios to a distribution
+## 2:00 — 2:40 · From three scenarios to a distribution
 
 **Screen:** scroll to the Monte-Carlo panel. Let it settle at 200 runs. Point at the big percentage,
 then the percentiles, then the histogram.
@@ -79,18 +88,19 @@ then the percentiles, then the histogram.
 
 **Screen:** click `500 runs` to show it re-samples.
 
-## 2:20 — 2:45 · Ship it
+## 2:40 — 3:05 · Ship it
 
 **Screen:** click **Show launch script**, scroll the generated TypeScript briefly, then click
 **Copy share link** and paste the URL into the address bar to show the design reloading from the URL.
 
-> "When the design is right, CurveCraft exports the launch script — a real
-> `buildCurveWithMarketCap` call with every parameter filled in, ready to create on chain.
+> "When the design is right, CurveCraft exports the launch script — a real `buildCurveWithMarketCap`
+> call that creates the config keypair, signs and sends the transaction. We simulate that exact
+> transaction against mainnet: the program logs `Instruction: CreateConfig`, no error.
 >
 > And every design lives in its own URL. No backend, no accounts — paste the link and your
 > co-founder opens the exact same config."
 
-## 2:45 — 3:05 · Close
+## 3:05 — 3:25 · Close
 
 **Screen:** `/presets` marketplace page, showing measured graduation odds per preset.
 
