@@ -331,9 +331,11 @@ describe('launch script export', () => {
 });
 
 describe('mainnet-facing guarantees', () => {
-  it('the SDK refuses the 100/0 split that would fail on chain', () => {
-    // buildCurveWithMarketCap itself throws for this config, which is why the
-    // lint exists: the failure has to be caught in the studio, not at deploy.
+  it('catches the 100/0 split the curve builder happily accepts', () => {
+    // buildCurveWithMarketCap compiles this config without complaint. The
+    // refusal only arrives later, from the SDK's validation inside
+    // `client.partner.createConfig` — i.e. when a builder runs the exported
+    // launch script. That gap is exactly why the studio runs its own check.
     const naive = withSpec({
       liquidityDistribution: {
         partnerLiquidityPercentage: 0,
@@ -342,6 +344,11 @@ describe('mainnet-facing guarantees', () => {
         creatorPermanentLockedLiquidityPercentage: 0,
       },
     });
-    expect(() => toConfigParams(naive)).toThrow(/locked liquidity/i);
+
+    expect(() => toConfigParams(naive)).not.toThrow();
+    expect(lintSpec(naive).ok).toBe(false);
+    expect(
+      lintSpec(naive).items.some((item) => item.id === 'locked-liquidity' && item.level === 'error'),
+    ).toBe(true);
   });
 });

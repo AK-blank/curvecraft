@@ -41,8 +41,11 @@ account was initialised, and every inner instruction succeeded.
 
 A designer's first instinct is to keep all migrated liquidity liquid:
 `creatorLiquidityPercentage: 100`, `creatorPermanentLockedLiquidityPercentage: 0`.
-The program requires at least 1000 bps (10%) locked at day 1, so the SDK refuses
-to build the curve at all:
+The program requires at least 1000 bps (10%) locked at day 1.
+
+The trap is *where* that surfaces. `buildCurveWithMarketCap` compiles the naive
+config without complaint — the curve looks fine — and the refusal only arrives
+when a builder runs the exported script, inside `client.partner.createConfig`:
 
 ```bash
 npm run verify:mainnet -- fair-launch --naive
@@ -50,10 +53,10 @@ npm run verify:mainnet -- fair-launch --naive
 # day 1. Current locked liquidity at day 1: 0 BPS.
 ```
 
-Four of CurveCraft's own presets shipped that split before the launch check
-existed. They are fixed (10–20% permanently locked) and `tests/core.test.ts`
-asserts every preset passes, so the marketplace cannot regress into a
-config that throws on deploy.
+That is the worst possible moment to learn it. Four of CurveCraft's own presets
+shipped that split before the launch check existed; they are fixed (10–20%
+permanently locked) and `tests/core.test.ts` asserts every preset passes, so the
+marketplace cannot regress into a config that dies at deploy.
 
 ## 3. The generated launch script type-checks
 

@@ -141,9 +141,9 @@ err: null
 ```
 
 And the split a designer reaches for first — 100% liquid, 0% permanently locked —
-is rejected by the program (at least 10% must be locked at day 1). Four of our own
-presets shipped that mistake before the launch check existed; they are fixed and
-the test suite keeps them fixed. Details, logs and caveats:
+compiles fine, then dies inside `createConfig` the moment the launch script runs,
+because the program requires at least 10% locked at day 1. Four of our own presets
+shipped that mistake before the launch check existed. Details, logs and caveats:
 [docs/verification.md](docs/verification.md).
 
 ## Tests
