@@ -14,6 +14,7 @@ import {
 
 import { toCreateConfigScript } from '@/core/codegen';
 import { PRESETS } from '@/core/presets';
+import { decodeSpec, encodeSpec } from '@/core/share';
 import type {
   CurvePointView,
   LaunchSpec,
@@ -26,6 +27,21 @@ interface SimulateResponse {
   curve: CurvePointView[];
   runs: SimulationResult[];
   specName: string;
+}
+
+interface MonteCarloResponse {
+  derived: SpecDerivedLike;
+  result: {
+    runs: number;
+    graduated: number;
+    graduationProbability: number;
+    graduationTimeP50: number | null;
+    fees: { p10: number; p50: number; p90: number };
+    peakMarketCap: { p10: number; p50: number; p90: number };
+    feeRate: { p10: number; p50: number; p90: number };
+    histogram: Array<{ bucket: number; count: number }>;
+    meanFills: number;
+  };
 }
 
 type NumericField =
@@ -68,6 +84,10 @@ export default function StudioClient() {
   const [error, setError] = useState<string | null>(null);
   const [activeRun, setActiveRun] = useState(0);
   const [showScript, setShowScript] = useState(false);
+  const [monteCarlo, setMonteCarlo] = useState<MonteCarloResponse | null>(null);
+  const [mcLoading, setMcLoading] = useState(false);
+  const [mcRuns, setMcRuns] = useState(200);
+  const [shareLabel, setShareLabel] = useState('Copy share link');
 
   const run = useCallback(async (nextSpec: LaunchSpec) => {
     setLoading(true);
@@ -93,6 +113,54 @@ export default function StudioClient() {
     const timer = setTimeout(() => void run(spec), 250);
     return () => clearTimeout(timer);
   }, [spec, run]);
+
+  // A spec can arrive in the URL, which is what makes designs shareable.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('s');
+    if (!encoded) return;
+    const decoded = decodeSpec(encoded);
+    if (decoded) {
+      setSpec(decoded);
+      setPresetId('shared');
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setMcLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch('/api/montecarlo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spec, runs: mcRuns }),
+        });
+        const payload = (await response.json()) as MonteCarloResponse;
+        if (!cancelled && response.ok) setMonteCarlo(payload);
+      } catch {
+        /* keep the previous distribution on failure */
+      } finally {
+        if (!cancelled) setMcLoading(false);
+      }
+    }, 900);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [spec, mcRuns]);
+
+  const share = async () => {
+    const url = `${window.location.origin}/studio?s=${encodeSpec(spec)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareLabel('Link copied');
+    } catch {
+      setShareLabel('Copy failed');
+    }
+    window.history.replaceState(null, '', `/studio?s=${encodeSpec(spec)}`);
+    setTimeout(() => setShareLabel('Copy share link'), 2_000);
+  };
 
   const update = <K extends keyof LaunchSpec>(key: K, value: LaunchSpec[K]) =>
     setSpec((current) => ({ ...current, [key]: value }));
@@ -129,7 +197,13 @@ export default function StudioClient() {
               design · simulate · ship token launches on Meteora DBC
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              onClick={() => void share()}
+              className="rounded-full border border-violet-500/60 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:bg-violet-500/10"
+            >
+              {shareLabel}
+            </button>
             {PRESETS.map((preset) => (
               <button
                 key={preset.id}
@@ -605,6 +679,139 @@ export default function StudioClient() {
                 <span className="font-mono text-slate-400">buildCurveWithMarketCap</span>, the same
                 helper a launch script would call.
               </p>
+            </div>
+          </div>
+
+          <div className={`${CARD} p-5`}>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-200">
+                  Graduation odds · Monte-Carlo
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {monteCarlo
+                    ? `${monteCarlo.result.runs} sampled demand paths · ${monteCarlo.result.meanFills.toFixed(0)} fills per path on average`
+                    : 'sampling demand paths…'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {[100, 200, 500].map((runs) => (
+                  <button
+                    key={runs}
+                    onClick={() => setMcRuns(runs)}
+                    className={`rounded-full px-3 py-1.5 text-xs transition ${
+                      mcRuns === runs
+                        ? 'bg-slate-100 text-slate-900'
+                        : 'border border-slate-700 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {runs} runs
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-5">
+                <div className={LABEL}>Graduates</div>
+                <div className="mt-1 font-mono text-4xl text-emerald-300">
+                  {monteCarlo
+                    ? `${(monteCarlo.result.graduationProbability * 100).toFixed(0)}%`
+                    : '—'}
+                </div>
+                <div className="mt-3 space-y-1 text-[11px] text-slate-500">
+                  <div>
+                    median time to graduate:{' '}
+                    <span className="font-mono text-slate-400">
+                      {monteCarlo?.result.graduationTimeP50
+                        ? clock(monteCarlo.result.graduationTimeP50)
+                        : '—'}
+                    </span>
+                  </div>
+                  <div>
+                    graduated in{' '}
+                    <span className="font-mono text-slate-400">
+                      {monteCarlo ? monteCarlo.result.graduated : '—'}
+                    </span>{' '}
+                    of {monteCarlo?.result.runs ?? '—'} paths
+                  </div>
+                </div>
+                {mcLoading && <div className="mt-3 text-[11px] text-slate-600">resampling…</div>}
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { label: 'Fees earned', data: monteCarlo?.result.fees, unit: spec.quoteAsset },
+                    {
+                      label: 'Effective fee rate',
+                      data: monteCarlo?.result.feeRate,
+                      unit: '%',
+                    },
+                    {
+                      label: 'Peak market cap',
+                      data: monteCarlo?.result.peakMarketCap,
+                      unit: spec.quoteAsset,
+                    },
+                  ].map((row) => (
+                    <div
+                      key={row.label}
+                      className="rounded-lg border border-slate-800 bg-slate-950/50 p-3"
+                    >
+                      <div className={LABEL}>{row.label}</div>
+                      <div className="mt-2 space-y-1 font-mono text-[11px] text-slate-400">
+                        {(['p10', 'p50', 'p90'] as const).map((key) => (
+                          <div key={key} className="flex justify-between">
+                            <span className="text-slate-600">{key}</span>
+                            <span>
+                              {row.data
+                                ? `${compact(row.data[key])}${row.unit === '%' ? '%' : ''}`
+                                : '—'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4">
+                  <div className={LABEL}>Distribution of peak market cap</div>
+                  <div className="mt-3 flex h-24 items-end gap-1">
+                    {(monteCarlo?.result.histogram ?? []).map((bucket, index) => {
+                      const max = Math.max(
+                        1,
+                        ...(monteCarlo?.result.histogram ?? []).map((b) => b.count),
+                      );
+                      const above = bucket.bucket >= spec.migrationMarketCap;
+                      return (
+                        <div
+                          key={index}
+                          title={`${compact(bucket.bucket)} ${spec.quoteAsset}: ${bucket.count} paths`}
+                          className={`flex-1 rounded-t ${above ? 'bg-emerald-400/70' : 'bg-violet-500/60'}`}
+                          style={{ height: `${Math.max(2, (bucket.count / max) * 100)}%` }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex justify-between text-[10px] text-slate-600">
+                    <span>0</span>
+                    <span>
+                      graduation {compact(spec.migrationMarketCap)} {spec.quoteAsset}
+                    </span>
+                    <span>
+                      {compact(
+                        monteCarlo?.result.histogram.at(-1)?.bucket ?? spec.migrationMarketCap,
+                      )}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                    Green bars cleared the graduation target. Demand is sampled lognormally (buyer
+                    count and buy size), with a 70% chance of a sniper wave, a 35% chance of a whale
+                    and a coin-flip on whether that whale dumps.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
