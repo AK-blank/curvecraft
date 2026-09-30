@@ -155,7 +155,8 @@ export default function PoolsPage() {
             endpoints block indexed requests from browsers.
           </p>
           <p className="mt-3 font-mono text-[11px] text-slate-500">
-            snapshot: {data.fetchedAt} ({timeAgo(data.fetchedAt)}) · endpoint {data.endpoint}
+            snapshot: {data.fetchedAt} ({timeAgo(data.fetchedAt)}) · provider{' '}
+            {data.provider ?? 'Public mainnet'} · endpoint {data.endpoint}
             {data.warning ? ` · ${data.warning}` : ''}
           </p>
         </section>

@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { deriveSpec, toConfigParams } from '@/core/build';
 import { analyze, analyzeMonteCarlo } from '@/core/analysis';
 import { toCreateConfigScript } from '@/core/codegen';
+import { redactEndpoint, resolveRpcProvider } from '@/core/providers';
 import { toLaunchReport } from '@/core/report';
 import { lintSpec } from '@/core/lint';
 import { monteCarlo } from '@/core/montecarlo';
@@ -397,5 +398,43 @@ describe('launch report', () => {
     });
     const report = toLaunchReport({ spec: broken, analysis: analyze(broken), monteCarlo: null });
     expect(report).toContain('cannot be deployed yet');
+  });
+});
+
+describe('rpc provider resolution', () => {
+  it('defaults to the keyless public endpoint', () => {
+    const provider = resolveRpcProvider({});
+    expect(provider.id).toBe('public');
+    expect(provider.keyless).toBe(true);
+  });
+
+  it('prefers a hackathon provider when a key is present', () => {
+    const solami = resolveRpcProvider({ SOLAMI_API_KEY: 'abc def' });
+    expect(solami.id).toBe('solami');
+    expect(solami.url).toContain('api_key=abc%20def');
+
+    const rpcfast = resolveRpcProvider({ RPC_FAST_API_KEY: 'xyz' });
+    expect(rpcfast.id).toBe('rpcfast');
+    expect(rpcfast.url).toContain('api_key=xyz');
+  });
+
+  it('lets an explicit endpoint win over a key', () => {
+    const provider = resolveRpcProvider({
+      SOLAMI_API_KEY: 'abc',
+      SOLAMI_RPC_URL: 'https://example.test/rpc',
+    });
+    expect(provider.url).toBe('https://example.test/rpc');
+  });
+
+  it('falls back through custom endpoints to public', () => {
+    expect(resolveRpcProvider({ SOLANA_RPC_URL: 'https://a.test' }).id).toBe('custom');
+    expect(resolveRpcProvider({ RPC_URL: 'https://b.test' }).id).toBe('custom');
+  });
+
+  it('never leaks a key when printing an endpoint', () => {
+    expect(redactEndpoint('https://x.test/rpc?api_key=secret123&cluster=mainnet')).not.toContain(
+      'secret123',
+    );
+    expect(redactEndpoint('https://user:pass@x.test/rpc')).not.toContain('pass');
   });
 });

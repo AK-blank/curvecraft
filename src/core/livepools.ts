@@ -23,6 +23,8 @@ import {
   DynamicBondingCurveClient,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 
+import { redactEndpoint, resolveRpcProvider } from './providers';
+
 const QUOTE_DECIMALS = 9; // SOL-quoted launches dominate DBC today.
 
 const POOL_DISCRIMINATORS = new Set([
@@ -62,7 +64,10 @@ export interface LivePool {
 export interface LivePoolsSnapshot {
   pools: LivePool[];
   scannedTransactions: number;
+  /** Redacted endpoint the snapshot was read through. */
   endpoint: string;
+  /** Which provider served it: public, rpcfast, solami or custom. */
+  provider: string;
   fetchedAt: string;
   /** Populated when the RPC refused part of the walk. */
   warning?: string;
@@ -73,9 +78,7 @@ function fetchImpl(): typeof fetch {
 }
 
 export function rpcEndpoint(): string {
-  return (
-    process.env.SOLANA_RPC_URL ?? process.env.RPC_URL ?? 'https://api.mainnet-beta.solana.com'
-  );
+  return resolveRpcProvider().url;
 }
 
 interface PoolState {
@@ -196,10 +199,12 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
     });
   }
 
+  const provider = resolveRpcProvider();
   return {
     pools,
     scannedTransactions: signatures.length,
-    endpoint: rpcEndpoint(),
+    endpoint: redactEndpoint(provider.url),
+    provider: provider.label,
     fetchedAt: new Date().toISOString(),
     warning: warnings.length ? warnings.slice(0, 3).join(' · ') : undefined,
   };

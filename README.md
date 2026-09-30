@@ -219,6 +219,7 @@ scripts/sim.ts          CLI
 | [docs/submission.md](docs/submission.md) | Submission copy, track fit, links |
 | [docs/demo-script.md](docs/demo-script.md) | Shot-by-shot demo video script |
 | [docs/pitch.md](docs/pitch.md) | Ten-slide pitch outline |
+| [docs/providers.md](docs/providers.md) | Switching the data path to a hackathon RPC provider |
 
 ## Roadmap
 
