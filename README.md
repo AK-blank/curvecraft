@@ -65,6 +65,37 @@ A slow linear decay barely changes what snipers pay. A short, steep exponential 
 cost of charging organic buyers 2.5× more than the flat schedule. That trade-off is the design
 decision, and now it is visible before deployment.
 
+## Second finding: ambitious graduation targets are cheap
+
+`buildCurveWithMarketCap` does not scale the raise linearly with the graduation
+market cap. Measured with a fixed 500 SOL start and 20% of supply on the curve:
+
+| Graduation MC | Raise to graduate | vs previous row |
+|---|---|---|
+| 2,000 SOL | 666.7 SOL | — |
+| 4,000 SOL | 1,044.8 SOL | ×1.57 |
+| 8,000 SOL | 1,600.0 SOL | ×1.53 |
+| 16,000 SOL | 2,403.5 SOL | ×1.50 |
+| 32,000 SOL | 3,555.6 SOL | ×1.48 |
+| 64,000 SOL | 5,197.5 SOL | ×1.46 |
+
+Every doubling of the graduation target costs about **1.5×** the raise, not 2×. A
+founder who wants a 64,000 SOL graduation instead of 8,000 SOL needs 3.2× the
+raise for 8× the headline valuation. `tests/core.test.ts` pins this behaviour so a
+dependency upgrade cannot silently change it.
+
+## Tests
+
+```bash
+npm test        # 15 invariants: pricing, monotonicity, determinism, share links
+```
+
+The suite asserts the things a judge (or a founder) would otherwise have to take
+on faith: that the first fill is priced at `initialMarketCap / supply`, that
+demand above the target graduates and demand below it does not, that a higher fee
+schedule earns more, that the same input produces the same output, and that a
+spec survives a round trip through a share link.
+
 ## Quick start
 
 ```bash

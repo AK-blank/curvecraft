@@ -1,0 +1,188 @@
+/**
+ * Core invariants.
+ *
+ * These tests are the project's honesty check: they assert the numbers the UI
+ * shows are internally consistent and behave monotonically when a single
+ * parameter moves.
+ */
+import { describe, expect, it } from 'vitest';
+
+import { deriveSpec, toConfigParams } from '@/core/build';
+import { monteCarlo } from '@/core/montecarlo';
+import { PRESETS, getPreset } from '@/core/presets';
+import { scaledScenarios, steadyDemand } from '@/core/scenarios';
+import { simulate } from '@/core/simulate';
+import { decodeSpec, encodeSpec } from '@/core/share';
+import type { LaunchSpec } from '@/core/types';
+
+const fairLaunch = getPreset('fair-launch')!.spec;
+
+function withSpec(patch: Partial<LaunchSpec>): LaunchSpec {
+  return { ...structuredClone(fairLaunch), ...patch };
+}
+
+describe('spec compilation', () => {
+  it('raises the required raise sub-linearly with the graduation market cap', () => {
+    // Measured behaviour of buildCurveWithMarketCap: a 2x graduation target
+    // costs roughly 1.5x the raise, not 2x. Ambitious targets are cheaper than
+    // they look, and this test pins that down so a dependency change is caught.
+    const base = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const doubledSpec = withSpec({ migrationMarketCap: fairLaunch.migrationMarketCap * 2 });
+    const doubled = deriveSpec(doubledSpec, toConfigParams(doubledSpec));
+    const ratio = doubled.migrationQuoteThreshold / base.migrationQuoteThreshold;
+
+    expect(ratio).toBeGreaterThan(1.4);
+    expect(ratio).toBeLessThan(1.7);
+  });
+
+  it('increases the raise monotonically with the graduation market cap', () => {
+    let previous = 0;
+    for (const migrationMarketCap of [2_000, 8_000, 32_000, 64_000]) {
+      const spec = withSpec({ migrationMarketCap });
+      const derived = deriveSpec(spec, toConfigParams(spec));
+      expect(derived.migrationQuoteThreshold).toBeGreaterThan(previous);
+      previous = derived.migrationQuoteThreshold;
+    }
+  });
+
+  it('prices the first fill at initial market cap / supply', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const expected = fairLaunch.initialMarketCap / fairLaunch.totalSupply;
+    expect(derived.startPrice).toBeCloseTo(expected, 12);
+  });
+
+  it('prices graduation at migration market cap / supply', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const expected = fairLaunch.migrationMarketCap / fairLaunch.totalSupply;
+    expect(derived.migrationPrice / expected).toBeGreaterThan(0.98);
+    expect(derived.migrationPrice / expected).toBeLessThan(1.02);
+  });
+
+  it('compiles every preset without throwing', () => {
+    for (const preset of PRESETS) {
+      const config = toConfigParams(preset.spec);
+      const derived = deriveSpec(preset.spec, config);
+      expect(derived.migrationQuoteThreshold).toBeGreaterThan(0);
+      expect(derived.startPrice).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('simulator', () => {
+  it('graduates when demand exceeds the raise target', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const [organic] = scaledScenarios(derived.migrationQuoteThreshold);
+    const result = simulate(fairLaunch, organic);
+
+    expect(result.graduatedAtSec).not.toBeNull();
+    expect(result.quoteVolume).toBeGreaterThan(derived.migrationQuoteThreshold);
+  });
+
+  it('does not graduate when demand is far below the target', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const thin = {
+      name: 'thin demand',
+      horizonSec: 3_600,
+      events: steadyDemand({
+        buyers: 20,
+        avgBuy: (derived.migrationQuoteThreshold * 0.05) / 20,
+        durationSec: 3_600,
+      }),
+    };
+    const result = simulate(fairLaunch, thin);
+
+    expect(result.graduatedAtSec).toBeNull();
+    expect(result.finalMarketCap).toBeLessThan(fairLaunch.migrationMarketCap);
+  });
+
+  it('charges more in fees when the fee schedule is higher', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const [organic] = scaledScenarios(derived.migrationQuoteThreshold);
+
+    const cheap = simulate(fairLaunch, organic);
+    const expensiveSpec = withSpec({
+      feeSchedule: { ...fairLaunch.feeSchedule, startingFeeBps: 500, endingFeeBps: 300 },
+    });
+    const expensive = simulate(expensiveSpec, organic);
+
+    expect(expensive.tradingFees).toBeGreaterThan(cheap.tradingFees);
+  });
+
+  it('is deterministic for the same spec and scenario', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const [organic] = scaledScenarios(derived.migrationQuoteThreshold);
+    const a = simulate(fairLaunch, organic);
+    const b = simulate(fairLaunch, organic);
+
+    expect(a.fills.length).toBe(b.fills.length);
+    expect(a.tradingFees).toBeCloseTo(b.tradingFees, 10);
+    expect(a.graduatedAtSec).toBeCloseTo(b.graduatedAtSec ?? 0, 6);
+  });
+
+  it('keeps the market cap path consistent with the fills', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const [organic] = scaledScenarios(derived.migrationQuoteThreshold);
+    const result = simulate(fairLaunch, organic);
+
+    for (const fill of result.fills.slice(0, 50)) {
+      expect(fill.marketCap).toBeCloseTo(fill.price * fairLaunch.totalSupply, 6);
+      expect(fill.progressPct).toBeGreaterThanOrEqual(0);
+      expect(fill.progressPct).toBeLessThanOrEqual(100);
+    }
+  });
+});
+
+describe('monte carlo', () => {
+  it('reports a probability between 0 and 1 and is reproducible for a seed', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const a = monteCarlo(fairLaunch, derived.migrationQuoteThreshold, { runs: 40, seed: 123 });
+    const b = monteCarlo(fairLaunch, derived.migrationQuoteThreshold, { runs: 40, seed: 123 });
+
+    expect(a.graduationProbability).toBeGreaterThanOrEqual(0);
+    expect(a.graduationProbability).toBeLessThanOrEqual(1);
+    expect(a.graduationProbability).toBeCloseTo(b.graduationProbability, 10);
+    expect(a.fees.p50).toBeCloseTo(b.fees.p50, 6);
+  });
+
+  it('raises graduation odds when demand rises', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const thin = monteCarlo(fairLaunch, derived.migrationQuoteThreshold, {
+      runs: 60,
+      seed: 5,
+      model: { buyersMean: 60, buyMean: 1, whaleProbability: 0, sniperProbability: 0 },
+    });
+    const fat = monteCarlo(fairLaunch, derived.migrationQuoteThreshold, {
+      runs: 60,
+      seed: 5,
+      model: { buyersMean: 900, buyMean: 8, whaleProbability: 0, sniperProbability: 0 },
+    });
+
+    expect(fat.graduationProbability).toBeGreaterThan(thin.graduationProbability);
+  });
+
+  it('reports ordered percentiles', () => {
+    const derived = deriveSpec(fairLaunch, toConfigParams(fairLaunch));
+    const mc = monteCarlo(fairLaunch, derived.migrationQuoteThreshold, { runs: 60, seed: 9 });
+
+    expect(mc.fees.p10).toBeLessThanOrEqual(mc.fees.p50);
+    expect(mc.fees.p50).toBeLessThanOrEqual(mc.fees.p90);
+    expect(mc.peakMarketCap.p10).toBeLessThanOrEqual(mc.peakMarketCap.p90);
+  });
+});
+
+describe('share links', () => {
+  it('round-trips a spec through the URL encoding', () => {
+    const encoded = encodeSpec(fairLaunch);
+    const decoded = decodeSpec(encoded);
+
+    expect(decoded).not.toBeNull();
+    expect(decoded!.totalSupply).toBe(fairLaunch.totalSupply);
+    expect(decoded!.initialMarketCap).toBe(fairLaunch.initialMarketCap);
+    expect(decoded!.feeSchedule.startingFeeBps).toBe(fairLaunch.feeSchedule.startingFeeBps);
+  });
+
+  it('returns null for garbage input instead of throwing', () => {
+    expect(decodeSpec('not-base64!!')).toBeNull();
+    expect(decodeSpec('')).toBeNull();
+  });
+});
