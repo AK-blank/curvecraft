@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { toConfigParams, toCurvePoints, deriveSpec } from '@/core/build';
 import { scaledScenarios } from '@/core/scenarios';
+import { lintSpec } from '@/core/lint';
 import { simulate } from '@/core/simulate';
 import type { LaunchSpec, Scenario } from '@/core/types';
 
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
       curve,
       runs,
       comparisons,
+      lint: lintSpec(spec),
       specName: spec.name,
     });
   } catch (error) {

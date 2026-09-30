@@ -78,6 +78,23 @@ the time this curve does not graduate**".
 
 ---
 
+## 4. Every preset we shipped was undeployable
+
+We wrote a launch check that runs the DBC program's own validators against a config. The first time
+we ran it, **all four presets failed**.
+
+The program requires at least 10% of migrated liquidity to be locked at day 1
+(`MIN_LOCKED_LIQUIDITY_BPS = 1000`). Our presets shipped the intuitive
+`100% liquid / 0% permanently locked` split — a config that reverts at `createConfig`. Nothing in
+the fee or market-cap UI hints at this rule; you find out when you deploy.
+
+The lint now checks LP percentages, locked liquidity, curve monotonicity, fee schedule, migration
+fee and pool-creation eligibility, and `tests/core.test.ts` fails if any shipped preset stops
+passing. A design tool that does not check the target program's rules is a liability, not a
+convenience.
+
+---
+
 ## Why the numbers hold up
 
 The simulator does not re-implement curve math. Each fill is quoted by

@@ -44,8 +44,8 @@ export const PRESETS: Preset[] = [
       liquidityDistribution: {
         partnerLiquidityPercentage: 0,
         partnerPermanentLockedLiquidityPercentage: 0,
-        creatorLiquidityPercentage: 100,
-        creatorPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 90,
+        creatorPermanentLockedLiquidityPercentage: 10,
       },
     },
   },
@@ -77,8 +77,8 @@ export const PRESETS: Preset[] = [
       liquidityDistribution: {
         partnerLiquidityPercentage: 0,
         partnerPermanentLockedLiquidityPercentage: 0,
-        creatorLiquidityPercentage: 100,
-        creatorPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 85,
+        creatorPermanentLockedLiquidityPercentage: 15,
       },
     },
   },
@@ -110,8 +110,8 @@ export const PRESETS: Preset[] = [
       liquidityDistribution: {
         partnerLiquidityPercentage: 0,
         partnerPermanentLockedLiquidityPercentage: 0,
-        creatorLiquidityPercentage: 100,
-        creatorPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 90,
+        creatorPermanentLockedLiquidityPercentage: 10,
       },
     },
   },
@@ -143,8 +143,8 @@ export const PRESETS: Preset[] = [
       liquidityDistribution: {
         partnerLiquidityPercentage: 0,
         partnerPermanentLockedLiquidityPercentage: 0,
-        creatorLiquidityPercentage: 100,
-        creatorPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 80,
+        creatorPermanentLockedLiquidityPercentage: 20,
       },
     },
   },

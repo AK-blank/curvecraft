@@ -9,7 +9,19 @@ const FEATURES = [
   },
   {
     title: 'Replay the launch',
-    body: 'Three demand scenarios run against the curve: organic grind, a sniper wave, and a whale that dumps. You see the market cap path, the fees collected, and whether it graduates.',
+    body: 'Three demand scenarios scaled to your own graduation target: organic grind, a sniper wave, and a whale that dumps. Market cap path, fees collected, and whether it graduates.',
+  },
+  {
+    title: 'Get the odds',
+    body: '200 sampled demand paths per design give a graduation probability and the p10/p50/p90 spread of fees — because a launch experiences one draw, not a base case.',
+  },
+  {
+    title: 'Compare designs',
+    body: 'Toggle presets into head-to-head mode: the same demand replayed against every design, with raise target, fee rate, sniper premium and graduation time side by side.',
+  },
+  {
+    title: 'Fork by URL',
+    body: 'Every design is encoded into its own link. Hand a config to a co-founder, or put it to a community vote — no backend, no accounts, the config is the link.',
   },
   {
     title: 'Ship the config',
@@ -67,7 +79,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="grid gap-4 pb-20 sm:grid-cols-3">
+        <section className="grid gap-4 pb-20 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature) => (
             <div
               key={feature.title}
@@ -77,6 +89,46 @@ export default function Home() {
               <p className="mt-3 text-sm leading-relaxed text-slate-400">{feature.body}</p>
             </div>
           ))}
+        </section>
+
+        <section className="pb-20">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8">
+            <h2 className="text-sm font-semibold text-slate-100">
+              The tool has already found something worth knowing
+            </h2>
+            <div className="mt-6 grid gap-6 sm:grid-cols-3">
+              <div>
+                <div className="font-mono text-3xl text-violet-300">+21.7%</div>
+                <p className="mt-2 text-sm text-slate-400">
+                  sniper premium from a 30-minute exponential fee decay, versus{' '}
+                  <span className="font-mono">+1.0%</span> for a two-hour linear one. A slow decay is
+                  a fee increase with extra steps.
+                </p>
+              </div>
+              <div>
+                <div className="font-mono text-3xl text-violet-300">×1.5</div>
+                <p className="mt-2 text-sm text-slate-400">
+                  the raise multiplier for every doubling of the graduation market cap. Ambition is
+                  the cheapest parameter in the config.
+                </p>
+              </div>
+              <div>
+                <div className="font-mono text-3xl text-violet-300">43%</div>
+                <p className="mt-2 text-sm text-slate-400">
+                  graduation probability for the default preset across 200 sampled demand paths —
+                  the number a founder actually needs before deploying.
+                </p>
+              </div>
+            </div>
+            <p className="mt-6 text-xs text-slate-500">
+              All three are reproducible: <span className="font-mono">npm test</span>,{' '}
+              <span className="font-mono">npm run sim -- --all</span>, and the{' '}
+              <Link href="/presets" className="text-violet-300 underline">
+                preset marketplace
+              </Link>
+              .
+            </p>
+          </div>
         </section>
 
         <section className="pb-20">

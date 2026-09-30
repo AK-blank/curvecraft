@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { deriveSpec, toConfigParams } from '@/core/build';
+import { lintSpec } from '@/core/lint';
 import { monteCarlo } from '@/core/montecarlo';
 import { PRESETS, getPreset } from '@/core/presets';
 import { scaledScenarios, steadyDemand } from '@/core/scenarios';
@@ -184,5 +185,61 @@ describe('share links', () => {
   it('returns null for garbage input instead of throwing', () => {
     expect(decodeSpec('not-base64!!')).toBeNull();
     expect(decodeSpec('')).toBeNull();
+  });
+});
+
+describe('launch lint', () => {
+  it('passes every shipped preset', () => {
+    for (const preset of PRESETS) {
+      const result = lintSpec(preset.spec);
+      const errors = result.items.filter((item) => item.level === 'error');
+      expect(errors, `${preset.name}: ${errors.map((e) => e.title).join(', ')}`).toHaveLength(0);
+      expect(result.ok).toBe(true);
+    }
+  });
+
+  it('rejects a config with no liquidity locked at day 1', () => {
+    // The program requires >= 1000 bps locked at day 1; a naive 100/0 split
+    // fails at createConfig, which is exactly what this lint exists to catch.
+    const naive = withSpec({
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 100,
+        creatorPermanentLockedLiquidityPercentage: 0,
+      },
+    });
+    const result = lintSpec(naive);
+
+    expect(result.ok).toBe(false);
+    expect(result.items.some((item) => item.id === 'locked-liquidity' && item.level === 'error')).toBe(
+      true,
+    );
+  });
+
+  it('rejects LP percentages that do not sum to 100', () => {
+    const broken = withSpec({
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 50,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 50,
+        creatorPermanentLockedLiquidityPercentage: 20,
+      },
+    });
+    const result = lintSpec(broken);
+
+    expect(result.ok).toBe(false);
+    expect(result.items.some((item) => item.id === 'lp-percentages' && item.level === 'error')).toBe(
+      true,
+    );
+  });
+
+  it('warns when a fee decay is slower than the sniper window', () => {
+    const slow = withSpec({
+      feeSchedule: { ...fairLaunch.feeSchedule, totalDurationSec: 14_400 },
+    });
+    const result = lintSpec(slow);
+
+    expect(result.items.some((item) => item.id === 'sniper-window')).toBe(true);
   });
 });

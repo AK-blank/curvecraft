@@ -17,7 +17,7 @@ const COMPARE_COLORS = ['#22d3ee', '#f472b6', '#facc15'];
 
 import { toCreateConfigScript } from '@/core/codegen';
 import { PRESETS } from '@/core/presets';
-import { decodeSpec, encodeSpec } from '@/core/share';
+import { encodeSpec } from '@/core/share';
 import type {
   CurvePointView,
   LaunchSpec,
@@ -31,11 +31,19 @@ interface ComparisonRun {
   runs: SimulationResult[];
 }
 
+interface LintItem {
+  id: string;
+  level: 'error' | 'warning' | 'pass';
+  title: string;
+  detail: string;
+}
+
 interface SimulateResponse {
   derived: SpecDerivedLike;
   curve: CurvePointView[];
   runs: SimulationResult[];
   comparisons: ComparisonRun[];
+  lint: { ok: boolean; items: LintItem[] };
   specName: string;
 }
 
@@ -86,9 +94,17 @@ function clock(seconds: number): string {
   return `${(seconds / 3600).toFixed(1)}h`;
 }
 
-export default function StudioClient() {
-  const [spec, setSpec] = useState<LaunchSpec>(() => structuredClone(PRESETS[0].spec));
-  const [presetId, setPresetId] = useState(PRESETS[0].id);
+export default function StudioClient({
+  initialSpec,
+  sharedFromUrl = false,
+}: {
+  initialSpec?: LaunchSpec;
+  sharedFromUrl?: boolean;
+}) {
+  const [spec, setSpec] = useState<LaunchSpec>(() =>
+    structuredClone(initialSpec ?? PRESETS[0].spec),
+  );
+  const [presetId, setPresetId] = useState(sharedFromUrl ? 'shared' : PRESETS[0].id);
   const [data, setData] = useState<SimulateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,22 +153,11 @@ export default function StudioClient() {
     return () => clearTimeout(timer);
   }, [spec, run, compareSpecs]);
 
-  // A spec can arrive in the URL, which is what makes designs shareable.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const encoded = params.get('s');
-    if (!encoded) return;
-    const decoded = decodeSpec(encoded);
-    if (decoded) {
-      setSpec(decoded);
-      setPresetId('shared');
-    }
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
-    setMcLoading(true);
     const timer = setTimeout(async () => {
+      if (cancelled) return;
+      setMcLoading(true);
       try {
         const response = await fetch('/api/montecarlo', {
           method: 'POST',
@@ -548,6 +553,54 @@ export default function StudioClient() {
           {error && (
             <div className="rounded-xl border border-red-900 bg-red-950/40 p-4 text-sm text-red-300">
               {error}
+            </div>
+          )}
+
+          {data?.lint && (
+            <div
+              className={`rounded-xl border p-5 ${
+                data.lint.ok
+                  ? 'border-emerald-900/70 bg-emerald-950/20'
+                  : 'border-red-900 bg-red-950/30'
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-slate-200">
+                  {data.lint.ok
+                    ? 'Launch check: this config can create a pool'
+                    : 'Launch check: this config cannot be deployed'}
+                </h2>
+                <span className="font-mono text-[11px] text-slate-500">
+                  {data.lint.items.filter((item) => item.level === 'pass').length} passed ·{' '}
+                  {data.lint.items.filter((item) => item.level === 'warning').length} warnings ·{' '}
+                  {data.lint.items.filter((item) => item.level === 'error').length} errors
+                </span>
+              </div>
+              <div className="mt-3 space-y-2">
+                {data.lint.items
+                  .filter((item) => item.level !== 'pass')
+                  .map((item) => (
+                    <div key={item.id} className="flex gap-3 text-xs">
+                      <span
+                        className={`mt-0.5 font-mono text-[10px] uppercase ${
+                          item.level === 'error' ? 'text-red-400' : 'text-amber-400'
+                        }`}
+                      >
+                        {item.level}
+                      </span>
+                      <span className="text-slate-300">
+                        <span className="font-medium text-slate-200">{item.title}.</span>{' '}
+                        <span className="text-slate-400">{item.detail}</span>
+                      </span>
+                    </div>
+                  ))}
+                {data.lint.items.every((item) => item.level === 'pass') && (
+                  <p className="text-xs text-emerald-300/80">
+                    Every program rule checked: LP split, locked liquidity, curve shape, fee
+                    schedule, migration fee and pool creation.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 

@@ -36,7 +36,12 @@ and when does this thing graduate?"**
    Toggle up to three other presets into **head-to-head** mode to replay the same demand against
    every design at once, and see each one's raise target, fee rate, sniper premium and graduation
    time side by side.
-4. **Ship** — export a TypeScript script that creates the config on chain via
+4. **Check** — every design runs through the DBC program's own rules before it can be exported:
+   LP percentages, minimum locked liquidity at day 1, curve monotonicity, fee schedule, migration
+   fee, and whether the config is allowed to create pools at all. Errors block; policy warnings
+   come from measured simulator behaviour (for example, a fee decay that is too slow to tax
+   snipers).
+5. **Ship** — export a TypeScript script that creates the config on chain via
    `@meteora-ag/dynamic-bonding-curve-sdk`. Every design is also encoded into its own URL, so a
    config can be handed to a co-founder or put to a community vote without a backend.
 
@@ -56,7 +61,7 @@ scenario ──► for each trade ──► swapQuote2(virtualPool, config, amou
                      └──────────────────────── pool.poolState.sqrtPrice ◄──────────────────┘
 ```
 
-## Findings the tool already produced
+## Finding one: the sniper premium
 
 | Preset | Effective fee (organic) | Effective fee (sniper wave) | Sniper tax |
 |---|---|---|---|
@@ -69,7 +74,7 @@ A slow linear decay barely changes what snipers pay. A short, steep exponential 
 cost of charging organic buyers 2.5× more than the flat schedule. That trade-off is the design
 decision, and now it is visible before deployment.
 
-## Second finding: ambitious graduation targets are cheap
+## Finding two: ambitious graduation targets are cheap
 
 `buildCurveWithMarketCap` does not scale the raise linearly with the graduation
 market cap. Measured with a fixed 500 SOL start and 20% of supply on the curve:
@@ -87,6 +92,18 @@ Every doubling of the graduation target costs about **1.5×** the raise, not 2×
 founder who wants a 64,000 SOL graduation instead of 8,000 SOL needs 3.2× the
 raise for 8× the headline valuation. `tests/core.test.ts` pins this behaviour so a
 dependency upgrade cannot silently change it.
+
+## Finding three: every preset we shipped was undeployable
+
+Writing the launch check paid for itself immediately. The DBC program requires **at least 10% of
+migrated liquidity to be locked at day 1** (`MIN_LOCKED_LIQUIDITY_BPS = 1000`), and all four of our
+original presets shipped a `100% liquid / 0% locked` split — they would have failed at
+`createConfig`, after the founder had already announced a date.
+
+The lint now runs the SDK's own validators (`validateMinimumLockedLiquidity`, `validateCurve`,
+`validatePoolFees`, `assertConfigAllowsNewPool`, `validateMigrationFee`) against every design, and
+`tests/core.test.ts` asserts that every preset in the marketplace passes. A config UI cannot infer
+these rules; a launch tool that does not check them is a liability.
 
 ## Tests
 
