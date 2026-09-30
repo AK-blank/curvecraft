@@ -79,7 +79,7 @@ more buyers by asking for more. The design decides whether that is enough — wh
 250 paths give the Meme Speedrun preset an 82% graduation chance at a 731 SOL target and Deep
 Migration a 27% chance at 2,400 SOL.
 
-The headline number a founder needs is not "peak market cap under my base case". It is "**57% of
+The headline number a founder needs is not "peak market cap under my base case". It is "**60% of
 the time this curve does not graduate**".
 
 ---
