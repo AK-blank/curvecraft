@@ -33,8 +33,12 @@ and when does this thing graduate?"**
 3. **Compare** — the scoreboard reports peak market cap, effective fee rate and graduation time per
    scenario, plus the fee delta versus organic demand. That delta is the number that tells you
    whether your "anti-sniper" schedule actually taxes snipers.
+   Toggle up to three other presets into **head-to-head** mode to replay the same demand against
+   every design at once, and see each one's raise target, fee rate, sniper premium and graduation
+   time side by side.
 4. **Ship** — export a TypeScript script that creates the config on chain via
-   `@meteora-ag/dynamic-bonding-curve-sdk`.
+   `@meteora-ag/dynamic-bonding-curve-sdk`. Every design is also encoded into its own URL, so a
+   config can be handed to a co-founder or put to a community vote without a backend.
 
 ## The numbers are not a toy model
 
@@ -127,7 +131,8 @@ scripts/sim.ts          CLI
 
 ## Roadmap
 
-- Preset marketplace: publish, fork and compare community configs by URL.
+- Preset marketplace: publish and vote on community configs (URL sharing and head-to-head
+  comparison already ship).
 - Live view: read real DBC pools from mainnet and show their curve progress next to a design.
 - Monte-Carlo mode: distribution over thousands of randomized demand paths instead of three runs.
 - Multi-segment curve designer (two segments, mid-price curves, custom sqrt price ladders).

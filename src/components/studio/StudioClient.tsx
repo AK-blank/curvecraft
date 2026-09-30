@@ -5,12 +5,15 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  Line,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+
+const COMPARE_COLORS = ['#22d3ee', '#f472b6', '#facc15'];
 
 import { toCreateConfigScript } from '@/core/codegen';
 import { PRESETS } from '@/core/presets';
@@ -22,10 +25,17 @@ import type {
   SpecDerivedLike,
 } from '@/core/types';
 
+interface ComparisonRun {
+  name: string;
+  derived: SpecDerivedLike;
+  runs: SimulationResult[];
+}
+
 interface SimulateResponse {
   derived: SpecDerivedLike;
   curve: CurvePointView[];
   runs: SimulationResult[];
+  comparisons: ComparisonRun[];
   specName: string;
 }
 
@@ -88,15 +98,17 @@ export default function StudioClient() {
   const [mcLoading, setMcLoading] = useState(false);
   const [mcRuns, setMcRuns] = useState(200);
   const [shareLabel, setShareLabel] = useState('Copy share link');
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
-  const run = useCallback(async (nextSpec: LaunchSpec) => {
+  const run = useCallback(
+    async (nextSpec: LaunchSpec, compareSpecs: Array<{ name: string; spec: LaunchSpec }>) => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch('/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spec: nextSpec }),
+        body: JSON.stringify({ spec: nextSpec, compareSpecs }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? 'Simulation failed');
@@ -107,12 +119,23 @@ export default function StudioClient() {
     } finally {
       setLoading(false);
     }
-  }, []);
+    },
+    [],
+  );
+
+  const compareSpecs = useMemo(
+    () =>
+      compareIds
+        .map((id) => PRESETS.find((preset) => preset.id === id))
+        .filter((preset): preset is (typeof PRESETS)[number] => Boolean(preset))
+        .map((preset) => ({ name: preset.name, spec: preset.spec })),
+    [compareIds],
+  );
 
   useEffect(() => {
-    const timer = setTimeout(() => void run(spec), 250);
+    const timer = setTimeout(() => void run(spec, compareSpecs), 250);
     return () => clearTimeout(timer);
-  }, [spec, run]);
+  }, [spec, run, compareSpecs]);
 
   // A spec can arrive in the URL, which is what makes designs shareable.
   useEffect(() => {
@@ -173,12 +196,62 @@ export default function StudioClient() {
 
   const chartData = useMemo(() => {
     if (!currentRun) return [];
-    return currentRun.pricePath.map(([t, price]) => ({
+    const base = currentRun.pricePath.map(([t, price]) => ({
       t,
-      marketCap: price * spec.totalSupply,
       label: clock(t),
+      marketCap: price * spec.totalSupply,
     }));
-  }, [currentRun, spec.totalSupply]);
+    const byTime = new Map(base.map((row) => [row.t, { ...row } as Record<string, number | string>]));
+    (data?.comparisons ?? []).forEach((comparison, index) => {
+      const supply =
+        compareSpecs.find((entry) => entry.name === comparison.name)?.spec.totalSupply ??
+        spec.totalSupply;
+      const runPath = comparison.runs[activeRun]?.pricePath ?? [];
+      runPath.forEach(([t, price]) => {
+        const row = byTime.get(t) ?? { t, label: clock(t), marketCap: 0 };
+        row[`compare${index}`] = price * supply;
+        byTime.set(t, row);
+      });
+    });
+    return [...byTime.values()].sort((a, b) => Number(a.t) - Number(b.t));
+  }, [currentRun, spec.totalSupply, data?.comparisons, activeRun, compareSpecs]);
+
+  const headToHead = useMemo(() => {
+    if (!data || (data.comparisons?.length ?? 0) === 0) return [];
+    const feeOf = (runs: SimulationResult[] | undefined, index: number) => {
+      const run = runs?.[index];
+      if (!run || run.quoteVolume === 0) return null;
+      return run.tradingFees / run.quoteVolume;
+    };
+    const rows = [
+      {
+        name: data.specName,
+        derived: data.derived,
+        runs: data.runs,
+        color: '#a78bfa',
+      },
+      ...(data.comparisons ?? []).map((comparison, index) => ({
+        name: comparison.name,
+        derived: comparison.derived,
+        runs: comparison.runs,
+        color: COMPARE_COLORS[index % COMPARE_COLORS.length],
+      })),
+    ];
+
+    return rows.map((row) => {
+      const organic = feeOf(row.runs, 0);
+      const sniper = feeOf(row.runs, 1);
+      const active = row.runs?.[activeRun];
+      return {
+        ...row,
+        organicFee: organic,
+        sniperPremium: organic && sniper ? ((sniper - organic) / organic) * 100 : null,
+        activeFee: feeOf(row.runs, activeRun),
+        activeGrad: active?.graduatedAtSec ?? null,
+        peak: active?.peakMarketCap ?? 0,
+      };
+    });
+  }, [data, activeRun]);
 
   const feeEfficiency = useMemo(() => {
     if (!currentRun || currentRun.quoteVolume === 0) return 0;
@@ -513,6 +586,31 @@ export default function StudioClient() {
                     : 'Running simulation…'}
                 </p>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider text-slate-600">compare</span>
+                {PRESETS.map((preset) => {
+                  const active = compareIds.includes(preset.id);
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() =>
+                        setCompareIds((current) =>
+                          current.includes(preset.id)
+                            ? current.filter((id) => id !== preset.id)
+                            : [...current, preset.id].slice(-3),
+                        )
+                      }
+                      className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                        active
+                          ? 'border-cyan-400/70 bg-cyan-400/10 text-cyan-200'
+                          : 'border-slate-700 text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      {preset.name}
+                    </button>
+                  );
+                })}
+              </div>
               <div className="flex gap-2">
                 {(data?.runs ?? []).map((sim, index) => (
                   <button
@@ -575,6 +673,18 @@ export default function StudioClient() {
                     strokeWidth={2}
                     fill="url(#mcFill)"
                   />
+                  {COMPARE_COLORS.slice(0, (data?.comparisons ?? []).length).map((color, index) => (
+                    <Line
+                      key={color}
+                      type="monotone"
+                      dataKey={`compare${index}`}
+                      stroke={color}
+                      strokeWidth={2}
+                      dot={false}
+                      name={data?.comparisons?.[index]?.name ?? `compare ${index + 1}`}
+                      connectNulls
+                    />
+                  ))}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -681,6 +791,76 @@ export default function StudioClient() {
               </p>
             </div>
           </div>
+
+          {headToHead.length > 1 && (
+            <div className={`${CARD} p-5`}>
+              <h2 className="mb-1 text-sm font-semibold text-slate-200">
+                Head to head · {data?.runs[activeRun]?.scenarioName}
+              </h2>
+              <p className="mb-4 text-xs text-slate-500">
+                The same demand replayed against every design you selected. Fee rate is fees divided
+                by quote volume; the sniper premium compares the sniper-wave scenario against organic
+                demand for that design.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-wider text-slate-500">
+                      <th className="pb-2 pr-4 font-normal">Design</th>
+                      <th className="pb-2 pr-4 font-normal">Raise target</th>
+                      <th className="pb-2 pr-4 font-normal">Fee rate</th>
+                      <th className="pb-2 pr-4 font-normal">Sniper premium</th>
+                      <th className="pb-2 pr-4 font-normal">Graduates at</th>
+                      <th className="pb-2 font-normal">Peak MC</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-mono text-slate-300">
+                    {headToHead.map((row) => (
+                      <tr key={row.name} className="border-t border-slate-800">
+                        <td className="py-2 pr-4">
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="inline-block size-2 rounded-full"
+                              style={{ background: row.color }}
+                            />
+                            {row.name}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-4">
+                          {compact(row.derived.migrationQuoteThreshold)} {spec.quoteAsset}
+                        </td>
+                        <td className="py-2 pr-4">
+                          {row.activeFee === null ? '—' : `${(row.activeFee * 100).toFixed(2)}%`}
+                        </td>
+                        <td className="py-2 pr-4">
+                          {row.sniperPremium === null ? (
+                            '—'
+                          ) : (
+                            <span
+                              className={
+                                row.sniperPremium > 5 ? 'text-emerald-300' : 'text-slate-400'
+                              }
+                            >
+                              {row.sniperPremium > 0 ? '+' : ''}
+                              {row.sniperPremium.toFixed(1)}%
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-4">
+                          {row.activeGrad === null ? (
+                            <span className="text-amber-400">no graduation</span>
+                          ) : (
+                            clock(row.activeGrad)
+                          )}
+                        </td>
+                        <td className="py-2">{compact(row.peak)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           <div className={`${CARD} p-5`}>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
