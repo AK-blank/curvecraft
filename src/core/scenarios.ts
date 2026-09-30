@@ -123,3 +123,47 @@ export function standardScenarios(): Scenario[] {
     },
   ];
 }
+
+/**
+ * Scenarios scaled to a launch's graduation target.
+ *
+ * A fixed scenario is meaningless across presets: 250 SOL of demand graduates a
+ * 200 SOL curve and barely dents a 2,400 SOL one. These runs are expressed as
+ * fractions of the raise, so the comparison between presets is apples to apples.
+ */
+export function scaledScenarios(thresholdQuote: number): Scenario[] {
+  const t = Math.max(thresholdQuote, 1);
+
+  return [
+    {
+      name: 'Organic grind',
+      horizonSec: 7_200,
+      events: steadyDemand({
+        buyers: 400,
+        avgBuy: (t * 1.35) / 400,
+        durationSec: 7_200,
+      }),
+    },
+    {
+      name: 'Sniper wave then organic',
+      horizonSec: 7_200,
+      events: [
+        ...sniperWave(60, (t * 0.05) / 60, 10),
+        ...steadyDemand({
+          buyers: 300,
+          avgBuy: (t * 1.25) / 300,
+          durationSec: 6_900,
+          startSec: 60,
+        }),
+      ],
+    },
+    {
+      name: 'Whale buys, then dumps',
+      horizonSec: 7_200,
+      events: [
+        ...steadyDemand({ buyers: 200, avgBuy: (t * 0.7) / 200, durationSec: 3_600 }),
+        ...whale(t * 0.6, 4_000, { sellPct: 1.2, sellAtSec: 6_000, totalSupply: 1_000_000_000 }),
+      ],
+    },
+  ];
+}

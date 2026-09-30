@@ -19,7 +19,7 @@ import {
   type ConfigParameters,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 
-import type { CurvePointView, LaunchSpec } from './types';
+import type { CurvePointView, LaunchSpec, SpecDerivedLike } from './types';
 
 /** Quote token decimals: SOL has 9, USDC has 6. */
 export function quoteDecimals(spec: LaunchSpec): number {
@@ -172,17 +172,7 @@ export function toCurvePoints(config: ConfigParameters): CurvePointView[] {
   });
 }
 
-export interface SpecDerived {
-  /** Quote units (e.g. SOL) required for the curve to complete. */
-  migrationQuoteThreshold: number;
-  /** Price of one base token at the first curve point, in quote units. */
-  startPrice: number;
-  /** Price of one base token at graduation, in quote units. */
-  migrationPrice: number;
-  /** Supply that migrates to the AMM, in whole tokens. */
-  migrationSupply: number;
-  quoteDecimals: number;
-}
+export type SpecDerived = SpecDerivedLike;
 
 /** Numbers the UI shows next to a spec, derived from the compiled config. */
 export function deriveSpec(spec: LaunchSpec, config: ConfigParameters): SpecDerived {

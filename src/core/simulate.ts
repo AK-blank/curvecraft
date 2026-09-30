@@ -121,9 +121,13 @@ export function simulate(
 
   // `swapQuote2` expects a quote-ready config: the SDK ships a helper that
   // reconciles a `buildCurve*` output with the on-chain `PoolConfig` shape.
-  const quoteConfig = client.pool.normalizeQuoteConfig(
-    config as never,
-  ) as unknown as ConfigParameters;
+  // `normalizeQuoteConfig` is marked private in the SDK types but is the
+  // supported way to make a `buildCurve*` output quote-ready; the SDK's own
+  // `getQuoteFromInputAmount` calls it internally.
+  const poolService = client.pool as unknown as {
+    normalizeQuoteConfig: (config: unknown) => unknown;
+  };
+  const quoteConfig = poolService.normalizeQuoteConfig(config) as ConfigParameters;
 
   const migrationThreshold = new BN(raw.migrationQuoteThreshold.toString());
   const curveSqrtPrices = (raw.curve ?? []).map((p) => new BN(p.sqrtPrice.toString()));

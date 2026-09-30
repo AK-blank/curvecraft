@@ -176,3 +176,12 @@ export interface CurvePointView {
   price: number;
   liquidity: string;
 }
+
+/** Plain (SDK-free) shape of the derived launch numbers, safe for client bundles. */
+export interface SpecDerivedLike {
+  migrationQuoteThreshold: number;
+  startPrice: number;
+  migrationPrice: number;
+  migrationSupply: number;
+  quoteDecimals: number;
+}

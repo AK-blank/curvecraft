@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CurveCraft
 
-## Getting Started
+**Design, simulate and ship token launches on Meteora's Dynamic Bonding Curve.**
 
-First, run the development server:
+Most token launches pick a curve by vibes and find out what they picked once the money is on
+chain. CurveCraft compiles a launch into a real DBC config, replays realistic demand against it
+with the official Meteora swap math, and hands you a runnable launch script.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Built for the [Colosseum Crypto World's Fair](https://www.colosseum.com/worldsfair) hackathon —
+Meteora DBC sidetrack.
+
+---
+
+## Why this exists
+
+A DBC launch has ~15 parameters that interact: start price, graduation market cap, fee schedule
+shape, dynamic fees, migration split, liquidity distribution. Two launches with the same market
+caps but different fee schedules behave nothing alike — one taxes snipers, the other subsidises
+them, and you cannot tell which from the config screen.
+
+CurveCraft answers the question a founder actually asks: **"under realistic demand, who pays what,
+and when does this thing graduate?"**
+
+## What it does
+
+1. **Design** — edit the launch spec: quote asset, supply, start/graduation market cap, fee mode
+   (linear / exponential / rate limiter), fee schedule, dynamic fee, migration fee, creator fee.
+2. **Simulate** — three demand scenarios scaled to *your* graduation target are replayed fill by
+   fill:
+   - *Organic grind* — 400 buys spread over two hours.
+   - *Sniper wave then organic* — 60 bots in the first ten seconds, then real demand.
+   - *Whale buys, then dumps* — a large buyer takes profit into the curve.
+3. **Compare** — the scoreboard reports peak market cap, effective fee rate and graduation time per
+   scenario, plus the fee delta versus organic demand. That delta is the number that tells you
+   whether your "anti-sniper" schedule actually taxes snipers.
+4. **Ship** — export a TypeScript script that creates the config on chain via
+   `@meteora-ag/dynamic-bonding-curve-sdk`.
+
+## The numbers are not a toy model
+
+CurveCraft does **not** re-implement bonding curve math. Every fill is quoted by the official SDK
+(`client.pool.swapQuote2`), and the simulator walks the curve by feeding each quote's
+`nextSqrtPrice` back in as the starting state. The fee scheduler reads the scenario clock, so a
+time-decaying fee behaves exactly as it does on chain. If the SDK says a trade pays 2.5%, the
+simulation reports 2.5%.
+
+```
+spec ──buildCurveWithMarketCap──► ConfigParameters ──normalizeQuoteConfig──► quote-ready config
+                                                                                    │
+scenario ──► for each trade ──► swapQuote2(virtualPool, config, amountIn) ──► price, fee, nextSqrtPrice
+                     ▲                                                                    │
+                     └──────────────────────── pool.poolState.sqrtPrice ◄──────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Findings the tool already produced
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Preset | Effective fee (organic) | Effective fee (sniper wave) | Sniper tax |
+|---|---|---|---|
+| Fair Launch (2% → 1% linear, 20 periods, 2h) | 1.32% | 1.34% | +1.5% |
+| Meme Speedrun (20% → 1% exponential, 12 periods, 30m) | 2.48% | 3.02% | **+21.8%** |
+| Deep Migration (2.5% → 1.2% linear, 16 periods, 4h) | 1.84% | 1.85% | +0.5% |
+| Stablecoin Pair (1.5% → 0.8% linear, 24 periods, 24h) | 1.19% | 1.19% | 0% |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+A slow linear decay barely changes what snipers pay. A short, steep exponential decay does — at the
+cost of charging organic buyers 2.5× more than the flat schedule. That trade-off is the design
+decision, and now it is visible before deployment.
 
-## Learn More
+## Quick start
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev          # http://localhost:3000/studio
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Simulate from the command line:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx tsx scripts/sim.ts --all              # every preset × every scenario
+npx tsx scripts/sim.ts fair-launch        # one preset
+npx tsx scripts/sim.ts --spec ./my.json   # your own launch spec
+```
 
-## Deploy on Vercel
+## Project layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/core/types.ts       LaunchSpec, Scenario, SimulationResult
+src/core/build.ts       LaunchSpec -> real DBC ConfigParameters (+ derived numbers)
+src/core/simulate.ts    the fill-by-fill simulator
+src/core/scenarios.ts   demand generators, scaled to the graduation target
+src/core/presets.ts     curated launch presets
+src/core/codegen.ts     LaunchSpec -> runnable on-chain launch script
+src/app/api/simulate    POST endpoint that runs the simulator
+src/app/studio          the studio UI
+scripts/sim.ts          CLI
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Roadmap
+
+- Preset marketplace: publish, fork and compare community configs by URL.
+- Live view: read real DBC pools from mainnet and show their curve progress next to a design.
+- Monte-Carlo mode: distribution over thousands of randomized demand paths instead of three runs.
+- Multi-segment curve designer (two segments, mid-price curves, custom sqrt price ladders).
+
+## License
+
+MIT
