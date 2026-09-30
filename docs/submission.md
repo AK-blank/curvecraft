@@ -54,8 +54,10 @@ Everything needed to submit CurveCraft, so the actual submission takes minutes.
 
 | Field | Value |
 |---|---|
-| GitHub | `https://github.com/<user>/curvecraft` |
-| Live demo | `https://<user>.github.io/curvecraft/` |
+| GitHub | <https://github.com/AK-blank/curvecraft> |
+| Live demo | <https://ak-blank.github.io/curvecraft/studio/> |
+| Preset marketplace | <https://ak-blank.github.io/curvecraft/presets/> |
+| Live mainnet pools | <https://ak-blank.github.io/curvecraft/pools/> |
 | Demo video | `<Loom / YouTube link>` |
 | X post | `<optional>` |
 

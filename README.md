@@ -6,6 +6,8 @@ Most token launches pick a curve by vibes and find out what they picked once the
 chain. CurveCraft compiles a launch into a real DBC config, replays realistic demand against it
 with the official Meteora swap math, and hands you a runnable launch script.
 
+**Live demo:** <https://ak-blank.github.io/curvecraft/studio/> · **Presets:** [marketplace](https://ak-blank.github.io/curvecraft/presets/) · **Live pools:** [mainnet snapshot](https://ak-blank.github.io/curvecraft/pools/)
+
 Built for the [Colosseum Crypto World's Fair](https://www.colosseum.com/worldsfair) hackathon —
 Meteora DBC sidetrack.
 
