@@ -80,3 +80,26 @@ sends and confirms — and `tests/codegen.test.ts` locks those steps in.
   simulation against mainnet state plus the program's own logs.
 - The simulator reproduces SDK pricing exactly, but it does not model MEV,
   priority fees, or liquidity that arrives from outside the curve.
+
+
+## Solami data path (prepared, pending a token)
+
+The Solami sidetrack requires that Solami be the data path, not a decorative
+integration. What is in the repo today:
+
+- `src/core/solami-source.ts` — filtered `getProgramAccountsV2` enumeration of
+  VirtualPool accounts (discriminator memcmp + 424-byte dataSize) and a
+  Yellowstone gRPC subscription to the DBC program.
+- `src/core/livepools.ts` — prefers that enumeration when `SOLAMI_RPC_TOKEN` is
+  set, records which discovery method ran in the snapshot's `discovery` field,
+  and falls back to the original transaction walk when it is not.
+- `scripts/solami-stream.ts` — `npm run solami:pools` and `npm run solami:stream`.
+- `tests/solami.test.ts` — 11 invariants: discriminator → base64, base58, the
+  update parsing, and that no token means the public path stays the default.
+
+Verified without credentials: `npx tsc --noEmit` clean, `npx vitest run` 51
+passing, `node scripts/build-static.mjs` succeeds, and the emitted browser
+bundle contains no `solami`, `yellowstone` or `grpc-js` code.
+
+Still required for the submission: a live mainnet run with a real token, and a
+2–3 minute recording of it (that is the sidetrack's hard requirement).

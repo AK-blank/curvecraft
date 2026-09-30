@@ -56,3 +56,31 @@ Both tracks need an account and a key, so they cannot be finished autonomously:
 
 Each key is one environment variable away from turning into a track submission, so send whichever
 you can get and the submission follows immediately.
+
+
+## Solami as the discovery path (2026-10-01)
+
+`resolveRpcProvider()` already let the reader run on any endpoint, but a plain
+endpoint swap is not enough for the Solami sidetrack: that bounty asks for the
+data path itself to be theirs, not just the URL.
+
+`src/core/solami-source.ts` adds two things a public node cannot serve:
+
+| Call | What it buys |
+|---|---|
+| `getProgramAccountsV2(DBC, { memcmp: VirtualPool discriminator, dataSize: 424 })` | The pools themselves, filtered server-side, instead of a walk over whoever traded last |
+| `subscribeTransactions('curvecraft-dbc', [DBC], PROCESSED)` | The Yellowstone firehose for the program, filtered server-side, so launches can stream instead of being polled |
+
+Resolution order (unchanged for the endpoint, new for discovery):
+
+1. `SOLAMI_RPC_TOKEN` present → enumerate via `getProgramAccountsV2`, decode through Solami
+2. otherwise → the original transaction walk on whatever endpoint is configured
+
+Verified without a token: unit tests pin the discriminator encoding
+(`d5e005d16245775c` → `1eAF0WJFd1w=`), the base58 encoder, and the account-key
+extraction the stream depends on. The script exits with a clear message rather
+than pretending to work.
+
+The `solami` SDK is imported dynamically, so an `npm run build:static` produces
+a browser bundle with no solami, yellowstone or grpc-js code in it — checked by
+grepping `out/_next/static/chunks`.
