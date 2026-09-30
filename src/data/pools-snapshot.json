@@ -1,46 +1,47 @@
 {
   "pools": [
     {
-      "address": "EGGPRPrR1TaB9hCWh89YscqdE1k3nFxUfXyKfNeGnVLY",
-      "baseMint": "GoPDZAPtgBPUX7QNroZsM4y7Xa3vSAf2kaMUiXb3nY9Q",
-      "creator": "7qmSgPAoHecq9J3K9QD3wGH7DkJirZk2TyjSxcH3EE4J",
+      "address": "3WXA8eXp5BmuaVbUrCvfeJ6wDbj9P6cuwTtvxfigzgeC",
+      "baseMint": "An7rFrzDF8VpHpVGwgLTRha9iETKcNoZJeMDe2HFQpxY",
+      "creator": "DyLqanrFCkmbJqrHYw4HcPLcdayzCokemUmFbf5ZsQX5",
       "config": "3mDSxat7hMmhQ41wQEyJJdufhN7j2Kd6oeNWEn8jfZF2",
-      "quoteReserve": 10.173024657,
+      "quoteReserve": 8.357167177,
       "migrationQuoteThreshold": 11.53,
-      "progressPct": 88.23091636600174,
+      "progressPct": 72.48193562012142,
       "isMigrated": false,
-      "baseReserve": 932472892.558771,
-      "quoteVault": "DfP9Jyo2GJN18QxLEUsW6to2x8J7xLmgr1qdsMbe67RY",
-      "activationPoint": 451973393
+      "baseReserve": 938310141.211718,
+      "quoteVault": "5KNvsYTqmTL8vpGRVm1u9YhNA4FR31s3aHKL28ViZofT",
+      "activationPoint": 451983247
     },
     {
-      "address": "vL6K2YXRiYYBmcQmpwVjj5F3PjmDuXoucNQQQXTi3az",
-      "baseMint": "CtH4yJ8fiHgcJw7q8PrhMYKh8X4hNM9DxWJs5oQvBHRx",
-      "creator": "BcV2En8ME5ksPPWp3s81UHRPZRoCWB6Cs5LST9HVycZd",
-      "config": "3Dr15KpCw4dBusfHJSfLVpwnw9FDLJCf4FDs3o48roJX",
-      "quoteReserve": 8.656489685,
+      "address": "JBSLbA734jVJKaHKC8LFxSqM9ugx4EnghteDQtohR8PH",
+      "baseMint": "7r1v5rZcGnyzVs1jei7FeMEiZVf4GhQgLYXjZHmMUDGQ",
+      "creator": "96C4WqmAHudb2nXPsg3A92j8J1eUiMg93ePBkLw1LvBN",
+      "config": "6G3dqSqQ8cq8b7uK3cZiDrbTGBoMcroFMTmVHDq8Kx7d",
+      "quoteReserve": 34.559083923,
+      "migrationQuoteThreshold": 99,
+      "progressPct": 34.90816557878788,
+      "isMigrated": false,
+      "baseReserve": 454358762.395299,
+      "quoteVault": "DhWCA6pvVuN9zosZxZP4eY8MQeAJni7U1meBUyQ7U9KC",
+      "activationPoint": 1790768546
+    },
+    {
+      "address": "HiatBk3MczMUxnsNBhYQRrTtx53Pex73tspswJURktDn",
+      "baseMint": "7T9jcgTmkKKmqFmr6vwA2V3G2mD7DadjhZEkurmY8zN1",
+      "creator": "xzy19tqTk3gA956Lz8na4C4mes2SPPLd7whqmPFx9Td",
+      "config": "2toDxUnvDSdWz9QV2N7PTGvs9UaEoCdbznLux88mH4cY",
+      "quoteReserve": 11.51,
       "migrationQuoteThreshold": 11.51,
-      "progressPct": 75.20842471763685,
-      "isMigrated": false,
-      "baseReserve": 937145595.030658,
-      "quoteVault": "BQvDestZWVMBd9QFAw7UnP169ZjQ9a45TdU61zcyN1gU",
-      "activationPoint": 451973331
-    },
-    {
-      "address": "EK2B4TRUJgv7inZakhNsfq83fdWayBcPGBV9SPkxcoiS",
-      "baseMint": "5EaNMmkFhg6Yn8aNfaX1psoiq1T2sqFqYesDcbLqqxJn",
-      "creator": "9x5oXXsbhAYUcR4NojrddZpHGZoFdcLex7z2WbiaTT5F",
-      "config": "CaDBnXEGdbJ9bKBN8U4AbbvJ7BMY6KMrBTXDyShaonjd",
-      "quoteReserve": 10.683448075,
-      "migrationQuoteThreshold": 10.95,
-      "progressPct": 97.56573584474886,
-      "isMigrated": false,
-      "baseReserve": 972435983.661698,
-      "quoteVault": "37BD6qRUt8ZaT7nwkpPNnA7fa9J96kxRwFshTVguyG6W",
-      "activationPoint": 451973262
+      "progressPct": 100,
+      "isMigrated": true,
+      "baseReserve": 928073172.401352,
+      "quoteVault": "5j9c84bWaNHyWR2b4vuYjMKoUKZ5j8wyxFKexn4nibKC",
+      "activationPoint": 451983026
     }
   ],
   "scannedTransactions": 16,
   "endpoint": "https://api.mainnet-beta.solana.com",
-  "fetchedAt": "2026-09-30T13:09:14.326Z"
+  "provider": "Custom endpoint",
+  "fetchedAt": "2026-09-30T13:52:45.869Z"
 }
