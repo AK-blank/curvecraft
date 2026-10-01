@@ -310,8 +310,10 @@ open, a dollar a share once it resolves). Creating a market or buying a side nee
 signature — Panta builds the unsigned transaction and never holds keys — so those paths stay in the
 UI where the user signs.
 
-The key is server-only. `npm run panta:snapshot` writes `src/data/panta-markets.json` at build time
-and the site imports that, so a credential never reaches a browser bundle.
+The key is server-only. `npm run panta:snapshot` writes `src/data/panta-markets.json` at build
+time, so a credential never reaches a browser bundle. The module is tested and ready; it is not
+surfaced in the UI, because creating a market costs ~50 USDC and the read path alone is not worth a
+page yet.
 
 ```bash
 # https://docs.panta.market/quickstart — register, mint a key, then:
