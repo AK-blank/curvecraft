@@ -23,6 +23,9 @@ import {
   validateMigrationFee,
   validateMinimumLockedLiquidity,
   validatePoolFees,
+  getLiquidityVestingInfoParams,
+  calculateLockedLiquidityBpsAtTime,
+  SECONDS_PER_DAY,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 
 import { toConfigParams } from './build';
@@ -51,6 +54,8 @@ function liquidityOf(spec: LaunchSpec) {
     creatorLiquidityPercentage: spec.liquidityDistribution?.creatorLiquidityPercentage ?? 100,
     creatorPermanentLockedLiquidityPercentage:
       spec.liquidityDistribution?.creatorPermanentLockedLiquidityPercentage ?? 0,
+    partnerLiquidityVesting: spec.liquidityDistribution?.partnerLiquidityVesting,
+    creatorLiquidityVesting: spec.liquidityDistribution?.creatorLiquidityVesting,
   };
 }
 
@@ -125,15 +130,32 @@ export function lintSpec(spec: LaunchSpec): LintResult {
         },
   );
 
-  const lockedBps =
-    (liquidity.creatorPermanentLockedLiquidityPercentage +
-      liquidity.partnerPermanentLockedLiquidityPercentage) *
-    100;
+  // The rule is about liquidity locked one day after migration, and vesting
+  // counts. A schedule with a cliff that covers day 1 is a legal alternative to
+  // a permanent lock — which is what the aggressive configs on mainnet rely on,
+  // so checking only the permanent percentages would reject valid designs.
+  const vestingInfo = (v?: { vestingPercentage: number; bpsPerPeriod: number; numberOfPeriods: number; cliffDurationFromMigrationTime: number; totalDuration: number }) =>
+    v
+      ? getLiquidityVestingInfoParams(
+          v.vestingPercentage,
+          v.bpsPerPeriod,
+          v.numberOfPeriods,
+          v.cliffDurationFromMigrationTime,
+          v.totalDuration,
+        )
+      : undefined;
+  const lockedBps = calculateLockedLiquidityBpsAtTime(
+    liquidity.partnerPermanentLockedLiquidityPercentage,
+    liquidity.creatorPermanentLockedLiquidityPercentage,
+    vestingInfo(liquidity.partnerLiquidityVesting) as never,
+    vestingInfo(liquidity.creatorLiquidityVesting) as never,
+    SECONDS_PER_DAY,
+  );
   const lockedOk = validateMinimumLockedLiquidity(
     liquidity.partnerPermanentLockedLiquidityPercentage,
     liquidity.creatorPermanentLockedLiquidityPercentage,
-    undefined,
-    undefined,
+    vestingInfo(liquidity.partnerLiquidityVesting) as never,
+    vestingInfo(liquidity.creatorLiquidityVesting) as never,
   );
   items.push(
     lockedOk
@@ -141,13 +163,17 @@ export function lintSpec(spec: LaunchSpec): LintResult {
           id: 'locked-liquidity',
           level: 'pass',
           title: 'Enough liquidity locked at day 1',
-          detail: `${lockedBps} bps locked (program minimum is 1000 bps / 10%).`,
+          detail:
+            `${lockedBps} bps locked at day 1 (program minimum is 1000 bps / 10%)` +
+            (liquidity.creatorLiquidityVesting || liquidity.partnerLiquidityVesting
+              ? ', counting the vesting cliff.'
+              : ' through the permanent lock.'),
         }
       : {
           id: 'locked-liquidity',
           level: 'error',
           title: 'Not enough liquidity locked at day 1',
-          detail: `${lockedBps} bps locked, but the program requires at least 1000 bps (10%). Raise the permanently locked share — a launch with 0% locked will fail at createConfig.`,
+          detail: `${lockedBps} bps locked at day 1, but the program requires at least 1000 bps (10%). Raise the locked share, or add a vesting cliff that holds through day 1 — a launch with nothing locked will fail at createConfig.`,
         },
   );
 

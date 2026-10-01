@@ -16,6 +16,7 @@ import {
   TokenType,
   buildCurveWithLiquidityWeights,
   buildCurveWithMarketCap,
+  getLiquidityVestingInfoParams,
   buildCurveWithTwoSegments,
   type ConfigParameters,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
@@ -146,9 +147,31 @@ export function toConfigParams(
       partnerPermanentLockedLiquidityPercentage:
         liquidity.partnerPermanentLockedLiquidityPercentage,
       partnerLiquidityPercentage: liquidity.partnerLiquidityPercentage,
+      ...(liquidity.partnerLiquidityVesting
+        ? {
+            partnerLiquidityVestingInfoParams: getLiquidityVestingInfoParams(
+              liquidity.partnerLiquidityVesting.vestingPercentage,
+              liquidity.partnerLiquidityVesting.bpsPerPeriod,
+              liquidity.partnerLiquidityVesting.numberOfPeriods,
+              liquidity.partnerLiquidityVesting.cliffDurationFromMigrationTime,
+              liquidity.partnerLiquidityVesting.totalDuration,
+            ),
+          }
+        : {}),
       creatorPermanentLockedLiquidityPercentage:
         liquidity.creatorPermanentLockedLiquidityPercentage,
       creatorLiquidityPercentage: liquidity.creatorLiquidityPercentage,
+      ...(liquidity.creatorLiquidityVesting
+        ? {
+            creatorLiquidityVestingInfoParams: getLiquidityVestingInfoParams(
+              liquidity.creatorLiquidityVesting.vestingPercentage,
+              liquidity.creatorLiquidityVesting.bpsPerPeriod,
+              liquidity.creatorLiquidityVesting.numberOfPeriods,
+              liquidity.creatorLiquidityVesting.cliffDurationFromMigrationTime,
+              liquidity.creatorLiquidityVesting.totalDuration,
+            ),
+          }
+        : {}),
     },
     lockedVesting,
     // Timestamp activation keeps fee-schedule durations in seconds, which is

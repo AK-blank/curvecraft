@@ -546,4 +546,47 @@ describe('uncompilable configurations', () => {
       expect(errors, `${preset.id} should compile`).toHaveLength(0);
     }
   });
+
+  it('accepts a vesting cliff in place of a permanent lock', () => {
+    // The program's rule is liquidity still locked one day after migration, and
+    // vesting counts. A design that locks nothing permanently but holds through
+    // day 1 is legal — this is what half the aggressive configs on mainnet may
+    // be doing, so the lint must not reject it.
+    const preset = getPreset('market-mode');
+    expect(preset).toBeDefined();
+    const spec = preset!.spec;
+
+    expect(spec.liquidityDistribution?.creatorPermanentLockedLiquidityPercentage).toBe(0);
+    expect(spec.liquidityDistribution?.creatorLiquidityVesting).toBeDefined();
+
+    const lock = lintSpec(spec).items.find((i) => i.id === 'locked-liquidity');
+    expect(lock?.level).toBe('pass');
+    expect(lock?.detail).toMatch(/counting the vesting cliff/);
+    // 12% of total liquidity is inside the cliff at day 1.
+    expect(lock?.detail).toMatch(/1[01]\d\d bps locked at day 1/);
+  });
+
+  it('still rejects a design with no lock and no vesting', () => {
+    // The guard the vesting support must not weaken.
+    const bare = {
+      ...getPreset('fair-launch')!.spec,
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 100,
+        creatorPermanentLockedLiquidityPercentage: 0,
+      },
+    };
+    const lock = lintSpec(bare).items.find((i) => i.id === 'locked-liquidity');
+    expect(lock?.level).toBe('error');
+  });
+
+  it('carries the vesting schedule into the compiled config', () => {
+    const config = toConfigParams(getPreset('market-mode')!.spec) as unknown as {
+      creatorLiquidityVestingInfo?: { vestingPercentage?: number; cliffDurationFromMigrationTime?: number | { toString(): string } };
+    };
+    expect(config.creatorLiquidityVestingInfo).toBeDefined();
+    expect(Number(config.creatorLiquidityVestingInfo?.vestingPercentage)).toBe(12);
+    expect(Number(config.creatorLiquidityVestingInfo?.cliffDurationFromMigrationTime)).toBe(86_400);
+  });
 });

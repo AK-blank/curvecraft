@@ -292,6 +292,49 @@ export const PRESETS: Preset[] = [
       },
     },
   },
+  {
+    id: 'market-mode',
+    name: 'Market Mode',
+    thesis:
+      'The config the market actually ships, measured across 200 live DBC launches: a 600 bps migration fee, half of trading fees to the creator, no permanent lock. One change is forced by the rules rather than by taste — a vesting cliff holds 12% through day 1, because half the configs on mainnet skip that and the program still requires it.',
+    spec: {
+      name: 'Market Mode',
+      description:
+        'The measured modal launch: SOL-quoted, dammV2 migration, 600 bps migration fee, 50% creator trading fee, 25 bps base fee, nothing permanently locked. A one-day vesting cliff satisfies the day-1 lock rule that most live configs fail.',
+      quoteAsset: 'SOL',
+      totalSupply: 1_000_000_000,
+      initialMarketCap: 50,
+      migrationMarketCap: 500,
+      percentageSupplyOnMigration: 20,
+      feeMode: 'linear',
+      feeSchedule: {
+        startingFeeBps: 25,
+        endingFeeBps: 25,
+        numberOfPeriods: 0,
+        totalDurationSec: 0,
+      },
+      dynamicFee: { enabled: false },
+      collectFeeMode: 'output',
+      migrationTarget: 'dammV2',
+      migrationFeePreset: 600,
+      creatorTradingFeePercentage: 50,
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 100,
+        creatorPermanentLockedLiquidityPercentage: 0,
+        // Nothing unlocks for a day, so the whole 12% counts as locked at day 1
+        // (1200 bps against a 1000 bps floor), then it vests out over ten days.
+        creatorLiquidityVesting: {
+          vestingPercentage: 12,
+          bpsPerPeriod: 1000,
+          numberOfPeriods: 10,
+          cliffDurationFromMigrationTime: 86_400,
+          totalDuration: 864_000,
+        },
+      },
+    },
+  },
 ];
 
 export function getPreset(id: string): Preset | undefined {

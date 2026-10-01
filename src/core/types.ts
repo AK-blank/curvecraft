@@ -70,6 +70,19 @@ export interface DynamicFeeConfig {
  */
 export type CurveShape = 'marketCap' | 'flat' | 'linear' | 'exponential';
 
+/** A liquidity vesting schedule, in the units the DBC SDK expects. */
+export interface LiquidityVestingSpec {
+  /** Share of TOTAL liquidity that vests, 0-100. */
+  vestingPercentage: number;
+  /** Basis points unlocked per period. */
+  bpsPerPeriod: number;
+  numberOfPeriods: number;
+  /** Seconds after migration before anything unlocks. */
+  cliffDurationFromMigrationTime: number;
+  /** Total vesting duration in seconds; frequency = totalDuration / numberOfPeriods. */
+  totalDuration: number;
+}
+
 export interface LaunchSpec {
   /** Display name, used in presets and exports. */
   name: string;
@@ -111,6 +124,17 @@ export interface LaunchSpec {
     partnerPermanentLockedLiquidityPercentage: number;
     creatorLiquidityPercentage: number;
     creatorPermanentLockedLiquidityPercentage: number;
+    /**
+     * Optional vesting schedule for each side's liquidity.
+     *
+     * The program's rule is about liquidity still locked one day after
+     * migration, so a schedule that holds through day 1 is a legal alternative
+     * to a permanent lock — and it is what the aggressive configs on mainnet
+     * are doing. `vestingPercentage` is a share of *total* liquidity, not of
+     * that side's slice, which is easy to get wrong.
+     */
+    partnerLiquidityVesting?: LiquidityVestingSpec;
+    creatorLiquidityVesting?: LiquidityVestingSpec;
   };
 
   /** Optional insider/team vesting that starts at migration. */
