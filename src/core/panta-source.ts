@@ -225,6 +225,136 @@ export interface PantaSnapshot {
   note?: string;
 }
 
+
+/**
+ * A create-market request, in the shape `POST /markets/create/quote/` wants.
+ *
+ * `startTime` must normally be at least an hour ahead (the on-chain
+ * `minimumStartDelay`), and `question` is hashed together with the wallet to
+ * derive the event address — so the same wallet asking the same question twice
+ * is the same market, which is what `DUPLICATE_MARKET` reports.
+ */
+export interface PantaCreateRequest {
+  wallet: string;
+  question: string;
+  resolutionRule: string;
+  sourcesOfTruth: string[];
+  category: PantaCategory;
+  /** Unix seconds. */
+  startTime: number;
+  endTime: number;
+  resolutionTime: number;
+  imageUrl: string;
+  marketType?: 'standard' | 'breaking';
+  eventInProgress?: boolean;
+  title?: string;
+  description?: string;
+}
+
+export type PantaCategory =
+  | 'sports'
+  | 'crypto'
+  | 'politics'
+  | 'entertainment'
+  | 'finance'
+  | 'science'
+  | 'world'
+  | 'other';
+
+export interface PantaQuote {
+  createId: string;
+  expectedEventPda: string;
+  /** Total creation fee in USDC base units (6 decimals). */
+  paymentUsdc: string;
+  liquidityInjectionUsdc: string;
+  platformRevenueUsdc: string;
+  expiresAt?: string;
+}
+
+export interface PantaUnsignedCreate {
+  createId: string;
+  expectedEventPda?: string;
+  /** Base64 unsigned `VersionedTransaction`. Panta never signs and never broadcasts. */
+  transaction: string;
+  recentBlockhash: string;
+  lastValidBlockHeight?: number;
+  blockhashExpiryHintSec?: number;
+  buildFingerprint?: string;
+  paymentUsdc?: string;
+  liquidityInjectionUsdc?: string;
+  platformRevenueUsdc?: string;
+  derived?: Record<string, string>;
+}
+
+/** USDC base units (6 decimals) as a human number. */
+export function usdc(baseUnits: string | undefined): number | undefined {
+  if (baseUnits === undefined) return undefined;
+  const value = Number(baseUnits);
+  return Number.isFinite(value) ? value / 1_000_000 : undefined;
+}
+
+/** Step 1 of creating a market: validate and price it. */
+export async function quoteMarket(
+  request: PantaCreateRequest,
+  options: PantaClientOptions = {},
+): Promise<PantaQuote> {
+  return pantaFetch<PantaQuote>('/markets/create/quote/', options, {
+    method: 'POST',
+    body: request,
+  });
+}
+
+/** Step 2: an unsigned transaction for the wallet to sign. */
+export async function buildCreateTransaction(
+  createId: string,
+  wallet: string,
+  options: PantaClientOptions = {},
+): Promise<PantaUnsignedCreate> {
+  return pantaFetch<PantaUnsignedCreate>('/markets/create/build/', options, {
+    method: 'POST',
+    body: { createId, wallet },
+  });
+}
+
+/** Step 4: after the wallet broadcasts, tell Panta to verify and catalog it. */
+export async function registerMarket(
+  createId: string,
+  signature: string,
+  options: PantaClientOptions = {},
+): Promise<unknown> {
+  return pantaFetch<unknown>('/markets/register/', options, {
+    method: 'POST',
+    body: { createId, signature },
+  });
+}
+
+/**
+ * Whether a proposed `startTime` clears Panta's on-chain start delay.
+ *
+ * Quoting costs a round trip and fails late, so the UI checks the obvious case
+ * first: a standard market normally has to start at least an hour out.
+ */
+export function startTimeProblem(startTime: number, now = Date.now(), minimumDelaySec = 3600): string | undefined {
+  const seconds = Math.floor(now / 1000);
+  if (!Number.isFinite(startTime)) return 'Pick a start time.';
+  if (startTime <= seconds) return 'Start time is in the past.';
+  if (startTime < seconds + minimumDelaySec) {
+    return `A standard market must start at least ${Math.round(minimumDelaySec / 60)} minutes from now.`;
+  }
+  return undefined;
+}
+
+/** End and resolution must bracket the start, which the API rejects otherwise. */
+export function timelineProblem(
+  startTime: number,
+  endTime: number,
+  resolutionTime: number,
+): string | undefined {
+  if (!(startTime < endTime)) return 'The market must close after it opens.';
+  if (!(endTime <= resolutionTime)) return 'Resolution cannot happen before the market closes.';
+  return undefined;
+}
+
 /** Endpoint summary for provenance lines in the UI. */
 export function pantaEndpointLabel(): string {
   return redactEndpoint(PANTA_API_BASE);

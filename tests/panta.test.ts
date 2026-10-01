@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   PANTA_API_BASE,
   PantaError,
+  buildCreateTransaction,
+  quoteMarket,
+  startTimeProblem,
+  timelineProblem,
+  usdc,
   impliedProbability,
   listPantaMarkets,
   listPantaPositions,
@@ -127,5 +132,64 @@ describe('panta source', () => {
   it('redacts the key everywhere it could be printed', () => {
     expect(redactKey('pk_test_abcdefghijklmnop')).toBe('pk_test…mnop');
     expect(redactKey(undefined)).toBe('none');
+  });
+
+  it('prices a create quote in USDC, not raw base units', async () => {
+    const { impl, calls } = fakeFetch([
+      {
+        body: {
+          createId: 'cr_abc',
+          expectedEventPda: 'Event111111111111111111111111111111111111',
+          paymentUsdc: '50000000',
+          liquidityInjectionUsdc: '10000000',
+          platformRevenueUsdc: '40000000',
+        },
+      },
+    ]);
+    const quote = await quoteMarket(
+      {
+        wallet: 'Creator1111111111111111111111111111111111',
+        question: 'Will this curve graduate before 1 December?',
+        resolutionRule: 'Resolves YES if the pool migrates to DAMM v2 by the end time.',
+        sourcesOfTruth: ['https://example.com/pool'],
+        category: 'crypto',
+        startTime: 1_800_000_000,
+        endTime: 1_800_600_000,
+        resolutionTime: 1_800_700_000,
+        imageUrl: 'https://example.com/market.png',
+      },
+      { apiKey: 'k', fetchImpl: impl },
+    );
+
+    expect(calls[0].url).toContain('/markets/create/quote/');
+    expect(quote.createId).toBe('cr_abc');
+    // The API speaks base units; the UI must not print 50000000 as dollars.
+    expect(usdc(quote.paymentUsdc)).toBe(50);
+    expect(usdc(quote.liquidityInjectionUsdc)).toBe(10);
+    expect(usdc(undefined)).toBeUndefined();
+  });
+
+  it('builds an unsigned transaction and never sends a signature', async () => {
+    const { impl } = fakeFetch([
+      { body: { createId: 'cr_abc', transaction: 'AQAAA…', recentBlockhash: 'BH1', buildFingerprint: 'fp' } },
+    ]);
+    const built = await buildCreateTransaction('cr_abc', 'Creator1111111111111111111111111111111111', {
+      apiKey: 'k',
+      fetchImpl: impl,
+    });
+    expect(built.transaction).toBe('AQAAA…');
+    // Panta builds and verifies; it must never be handed a key or a signature here.
+    expect(built).not.toHaveProperty('signature');
+  });
+
+  it('catches an impossible timeline before spending a request on it', () => {
+    const now = 1_800_000_000_000; // ms
+    expect(startTimeProblem(1_800_000_000, now)).toBe('Start time is in the past.');
+    expect(startTimeProblem(1_800_000_600, now)).toMatch(/at least 60 minutes/);
+    expect(startTimeProblem(1_800_007_200, now)).toBeUndefined();
+
+    expect(timelineProblem(100, 50, 200)).toMatch(/close after it opens/);
+    expect(timelineProblem(100, 200, 150)).toMatch(/Resolution cannot happen before/);
+    expect(timelineProblem(100, 200, 300)).toBeUndefined();
   });
 });
