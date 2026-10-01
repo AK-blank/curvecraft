@@ -110,9 +110,12 @@ describe('accountsFromUpdate', () => {
 describe('rpc fast paginated enumeration', () => {
   it('walks pages until the endpoint stops returning a key', async () => {
     const { fetchPoolPage } = await import('@/core/rpcfast-source');
-    const calls: Array<Record<string, unknown>> = [];
+    interface PageRequest {
+      params: [string, { paginationKey: string | null; dataSlice: { offset: number; length: number }; filters: unknown[] }];
+    }
+    const calls: PageRequest[] = [];
     const fakeFetch = (async (_url: string, init: { body: string }) => {
-      const body = JSON.parse(init.body);
+      const body = JSON.parse(init.body) as PageRequest;
       calls.push(body);
       const key = body.params[1].paginationKey;
       const page = key === null ? ['A', 'B'] : key === 'k1' ? ['C'] : [];
