@@ -254,6 +254,44 @@ export const PRESETS: Preset[] = [
       },
     },
   },
+  {
+    id: 'icm-pair',
+    name: 'ICM Pair',
+    thesis:
+      'The quote asset is another community or creator token, so a sub-community prices discovery inside an economy it already belongs to instead of against SOL. Fees are collected in that same token, which means the parent treasury accumulates rather than drains, and a linear curve keeps pricing legible for holders who are not traders.',
+    spec: {
+      name: 'ICM Pair',
+      description:
+        'Community-quoted launch: the quote mint is a parent ICM or creator token (6 decimals — replace the placeholder mint in the exported script). A linear curve and a 15% permanently locked share keep the sub-community aligned with the parent.',
+      // Any SPL mint works as a quote asset; the exported script carries a
+      // TODO where the real ICM token address goes.
+      quoteAsset: 'ICM',
+      quoteDecimals: 6,
+      totalSupply: 1_000_000_000,
+      initialMarketCap: 150_000,
+      migrationMarketCap: 1_200_000,
+      percentageSupplyOnMigration: 30,
+      curveShape: 'linear',
+      feeMode: 'linear',
+      feeSchedule: {
+        startingFeeBps: 150,
+        endingFeeBps: 75,
+        numberOfPeriods: 12,
+        totalDurationSec: 21_600,
+      },
+      dynamicFee: { enabled: false },
+      collectFeeMode: 'quote',
+      migrationTarget: 'dammV2',
+      migrationFeePreset: 100,
+      creatorTradingFeePercentage: 15,
+      liquidityDistribution: {
+        partnerLiquidityPercentage: 0,
+        partnerPermanentLockedLiquidityPercentage: 0,
+        creatorLiquidityPercentage: 85,
+        creatorPermanentLockedLiquidityPercentage: 15,
+      },
+    },
+  },
 ];
 
 export function getPreset(id: string): Preset | undefined {

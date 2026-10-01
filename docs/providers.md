@@ -17,7 +17,7 @@ provider is a two-minute configuration change, not a rewrite.
 | Variable | Effect |
 |---|---|
 | `SOLAMI_RPC_URL` | Use this endpoint, label the snapshot **Solami** |
-| `SOLAMI_API_KEY` | Expand `SOLAMI_RPC_TEMPLATE` (default `https://api.solami.dev/rpc?api_key={key}`) |
+| `SOLAMI_API_KEY` | Expand `SOLAMI_RPC_TEMPLATE` (default `https://rpc.solami.dev/sol?api_key={key}`) |
 | `RPC_FAST_URL` | Use this endpoint, label the snapshot **RPC Fast** |
 | `RPC_FAST_API_KEY` | Expand `RPC_FAST_RPC_TEMPLATE` (default `https://solana-rpc.rpcfast.com/?api_key={key}`) |
 | `SOLANA_RPC_URL` / `RPC_URL` | Any custom endpoint, labelled **Custom endpoint** |

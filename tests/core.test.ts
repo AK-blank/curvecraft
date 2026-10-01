@@ -519,4 +519,31 @@ describe('uncompilable configurations', () => {
   it('leaves unrelated errors alone', () => {
     expect(explainBuildError('Some other failure', fairLaunch)).toBe('Some other failure');
   });
+
+  it('ships an ICM pair whose quote asset is another token, not a currency', () => {
+    const preset = getPreset('icm-pair');
+    expect(preset).toBeDefined();
+    const spec = preset!.spec;
+    // Meteora's DBC accepts any SPL mint as the quote asset; this preset is the
+    // one that exercises that, so the quote must not be SOL or a stablecoin.
+    expect(spec.quoteAsset).not.toBe('SOL');
+    expect(spec.quoteAsset).not.toBe('USDC');
+    expect(spec.quoteDecimals).toBe(6);
+    // Fees collected in the parent token is the point: the community treasury
+    // accumulates the token it already holds.
+    expect(spec.collectFeeMode).toBe('quote');
+    // Community alignment: a permanent share, not a creator exit.
+    expect(spec.liquidityDistribution?.creatorPermanentLockedLiquidityPercentage ?? 0).toBeGreaterThanOrEqual(10);
+    expect(lintSpec(spec).items.filter((i) => i.level === 'error')).toHaveLength(0);
+  });
+
+  it('keeps every preset deployable and distinct', () => {
+    const ids = PRESETS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(PRESETS.length).toBeGreaterThanOrEqual(8);
+    for (const preset of PRESETS) {
+      const errors = lintSpec(preset.spec).items.filter((i) => i.level === 'error');
+      expect(errors, `${preset.id} should compile`).toHaveLength(0);
+    }
+  });
 });

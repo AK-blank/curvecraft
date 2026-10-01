@@ -34,7 +34,8 @@ export interface RpcProvider {
   note: string;
 }
 
-const DEFAULT_SOLAMI_TEMPLATE = 'https://api.solami.dev/rpc?api_key={key}';
+// Solami's JSON-RPC base is /sol on rpc.solami.dev; /ws/sol for subscriptions.
+const DEFAULT_SOLAMI_TEMPLATE = 'https://rpc.solami.dev/sol?api_key={key}';
 const DEFAULT_RPC_FAST_TEMPLATE = 'https://solana-rpc.rpcfast.com/?api_key={key}';
 const PUBLIC_ENDPOINT = 'https://api.mainnet-beta.solana.com';
 

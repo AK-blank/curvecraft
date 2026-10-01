@@ -65,9 +65,9 @@ export default function PresetsPage() {
       <main className="mx-auto max-w-6xl px-6 py-14">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Preset marketplace</h1>
         <p className="mt-4 max-w-3xl text-slate-400">
-          Seven launch designs across asset classes — a community token, a meme speedrun, a
-          stablecoin pair, a deep-migration launch, a tokenized equity pair, an RWA yield pair and an
-          AI agent token. Each is measured against 200 sampled demand paths, sized to its own raise
+          Eight launch designs across asset classes — a community token, a meme speedrun, a
+          stablecoin pair, a deep-migration launch, a tokenized equity pair, an RWA yield pair, an
+          AI agent token and an ICM pair quoted in another community token. Each is measured against 200 sampled demand paths, sized to its own raise
           target. The odds below are not marketing copy: every path is priced fill-by-fill with the
           official Meteora DBC swap math, including a 70% chance of a sniper wave and a 35% chance of
           a whale. Fork any of them into the studio and change one parameter at a time.
