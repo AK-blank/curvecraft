@@ -14,6 +14,10 @@
  * server-side enumeration (Solami `getProgramAccountsV2` or RPC Fast's
  * paginated `getProgramAccounts`). Nothing here runs at runtime.
  */
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { readLivePools, type LivePool } from '../src/core/livepools';
 import type { LaunchSpec } from '../src/core/types';
 
@@ -51,6 +55,69 @@ function table(title: string, rows: Array<[string, number, number]>): void {
     const bar = '█'.repeat(Math.max(1, Math.round(pct / 4)));
     console.log(`  ${String(label).padEnd(18)} ${String(count).padStart(4)}  ${pct.toFixed(1).padStart(5)}%  ${bar}`);
   }
+}
+
+export interface LaunchStats {
+  sampled: number;
+  decodable: number;
+  fetchedAt: string;
+  discovery: string;
+  provider: string;
+  quoteAssets: Array<{ label: string; count: number; pct: number }>;
+  migrationTargets: Array<{ label: string; count: number; pct: number }>;
+  migrationFeePresets: Array<{ label: string; count: number; pct: number }>;
+  migrated: { count: number; pct: number };
+  stalledUnder10: { count: number; pct: number };
+  midBand: { count: number; pct: number };
+  lock: { belowRule: number; of: number; pct: number; medianBps: number };
+  medians: {
+    baseFeeBps: number;
+    creatorTradingFeePct: number;
+    creatorPermanentLockedPct: number;
+    startingMarketCap: number;
+    migrationMarketCap: number;
+    supplySoldPct: number;
+  };
+}
+
+function collect(pools: LivePool[], discovery: string, provider: string, fetchedAt: string): LaunchStats {
+  const designed = pools.filter((p) => p.design) as Array<LivePool & { design: LaunchSpec }>;
+  const asRows = <T extends string | number>(values: T[]) =>
+    tally(values).map(([label, count, pct]) => ({ label: String(label), count, pct }));
+  const dayOneLocked = designed.map((p) => p.dayOneLockedBps).filter((v): v is number => typeof v === 'number');
+  const migrated = pools.filter((p) => p.isMigrated).length;
+  const stalled = pools.filter((p) => !p.isMigrated && p.progressPct < 10).length;
+  const mid = pools.filter((p) => !p.isMigrated && p.progressPct >= 10 && p.progressPct < 100).length;
+
+  return {
+    sampled: pools.length,
+    decodable: designed.length,
+    fetchedAt,
+    discovery,
+    provider,
+    quoteAssets: asRows(designed.map((p) => p.design.quoteAsset as string)),
+    migrationTargets: asRows(designed.map((p) => p.design.migrationTarget as string)),
+    migrationFeePresets: asRows(designed.map((p) => String(p.design.migrationFeePreset))),
+    migrated: { count: migrated, pct: (migrated / Math.max(1, pools.length)) * 100 },
+    stalledUnder10: { count: stalled, pct: (stalled / Math.max(1, pools.length)) * 100 },
+    midBand: { count: mid, pct: (mid / Math.max(1, pools.length)) * 100 },
+    lock: {
+      belowRule: dayOneLocked.filter((bps) => bps < 1000).length,
+      of: dayOneLocked.length,
+      pct: (dayOneLocked.filter((bps) => bps < 1000).length / Math.max(1, dayOneLocked.length)) * 100,
+      medianBps: median(dayOneLocked),
+    },
+    medians: {
+      baseFeeBps: median(designed.map((p) => p.design.feeSchedule?.startingFeeBps ?? 0).filter((v) => v > 0)),
+      creatorTradingFeePct: median(designed.map((p) => p.design.creatorTradingFeePercentage ?? 0)),
+      creatorPermanentLockedPct: median(
+        designed.map((p) => p.design.liquidityDistribution?.creatorPermanentLockedLiquidityPercentage ?? 0),
+      ),
+      startingMarketCap: median(designed.map((p) => p.design.initialMarketCap).filter((v) => v > 0)),
+      migrationMarketCap: median(designed.map((p) => p.design.migrationMarketCap).filter((v) => v > 0)),
+      supplySoldPct: median(designed.map((p) => p.design.percentageSupplyOnMigration).filter((v) => v > 0)),
+    },
+  };
 }
 
 function report(pools: LivePool[], discovery: string, provider: string, fetchedAt: string): void {
@@ -152,9 +219,19 @@ function report(pools: LivePool[], discovery: string, provider: string, fetchedA
 
 async function main() {
   const limit = Number(process.argv[2] ?? 80);
+  const save = process.argv.includes('--save') || process.argv.includes('save');
   const snapshot = await readLivePools(limit, 16);
-  report(snapshot.pools, snapshot.discovery ?? 'transaction walk', snapshot.provider, snapshot.fetchedAt);
+  const discovery = snapshot.discovery ?? 'transaction walk';
+  report(snapshot.pools, discovery, snapshot.provider, snapshot.fetchedAt);
   if (snapshot.warning) console.log('\nwarning:', snapshot.warning);
+
+  if (save) {
+    const stats = collect(snapshot.pools, discovery, snapshot.provider, snapshot.fetchedAt);
+    const outfile = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'data', 'launch-stats.json');
+    mkdirSync(dirname(outfile), { recursive: true });
+    writeFileSync(outfile, JSON.stringify(stats, null, 2) + '\n');
+    console.log(`\nwrote ${outfile} (${stats.sampled} pools)`);
+  }
 }
 
 void main().catch((error) => {

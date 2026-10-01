@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import snapshot from '@/data/pools-snapshot.json';
+import launchStats from '@/data/launch-stats.json';
 import type { LivePoolsSnapshot } from '@/core/livepools';
 import { specLink } from '@/core/share';
 
@@ -12,6 +13,21 @@ export const metadata: Metadata = {
 };
 
 const data = snapshot as LivePoolsSnapshot;
+const stats = launchStats as LaunchStats;
+
+interface LaunchStats {
+  sampled: number;
+  fetchedAt: string;
+  provider: string;
+  discovery: string;
+  migrated: { count: number; pct: number };
+  stalledUnder10: { count: number; pct: number };
+  midBand: { count: number; pct: number };
+  lock: { belowRule: number; of: number; pct: number; medianBps: number };
+  quoteAssets: Array<{ label: string; count: number; pct: number }>;
+  migrationFeePresets: Array<{ label: string; count: number; pct: number }>;
+  medians: { creatorTradingFeePct: number; baseFeeBps: number; startingMarketCap: number };
+}
 
 function compact(value: number): string {
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
@@ -62,6 +78,79 @@ export default function PoolsPage() {
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           What is actually launching
         </h1>
+
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-lg font-medium">
+              What {stats.sampled} sampled launches chose
+            </h2>
+            <span className="text-xs text-slate-500">
+              decoded from mainnet configs · {stats.fetchedAt.slice(0, 10)}
+            </span>
+          </div>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">
+            The twelve pools below are the recent picture. This is the wider one: a sample of{' '}
+            {stats.sampled} live launches, taken in account-address order so it is not skewed toward
+            whoever traded last, with each launch&apos;s config decoded and measured. Reproduce it
+            with <code className="text-slate-300">npm run pools:analyze 200 --save</code>.
+          </p>
+
+          <dl className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-slate-500">Graduated</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums text-emerald-400">
+                {stats.migrated.pct.toFixed(0)}%
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-slate-500">Stalled under 10%</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums text-amber-400">
+                {stats.stalledUnder10.pct.toFixed(0)}%
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-slate-500">Between 10% and 99%</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums text-slate-300">
+                {stats.midBand.pct.toFixed(0)}%
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-slate-500">
+                Below the day-1 lock rule
+              </dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums text-rose-400">
+                {stats.lock.pct.toFixed(0)}%
+              </dd>
+            </div>
+          </dl>
+
+          <div className="mt-6 grid gap-4 border-t border-slate-800 pt-5 text-sm sm:grid-cols-3">
+            <p className="text-slate-400">
+              <span className="text-slate-200">The distribution is bimodal.</span>{' '}
+              {stats.migrated.pct.toFixed(0)}% graduate and {stats.stalledUnder10.pct.toFixed(0)}%
+              never clear a tenth of their raise; {stats.midBand.pct.toFixed(0)}% sit between. A curve
+              nobody is buying does not drift sideways, it stops.
+            </p>
+            <p className="text-slate-400">
+              <span className="text-slate-200">
+                {stats.lock.belowRule} of {stats.lock.of} decoded configs
+              </span>{' '}
+              hold less liquidity at day 1 than the program requires (median{' '}
+              {stats.lock.medianBps.toFixed(0)} bps against a 1000 bps floor), which is why the launch
+              check runs the program&apos;s validator instead of trusting precedent.
+            </p>
+            <p className="text-slate-400">
+              <span className="text-slate-200">
+                {stats.quoteAssets.map((a) => `${a.label} ${a.pct.toFixed(0)}%`).join(' · ')}
+              </span>{' '}
+              — no sampled launch quotes another token, so the stock, ICM and RWA pairs the{' '}
+              <Link className="text-violet-400 hover:underline" href="/presets">
+                preset marketplace
+              </Link>{' '}
+              covers are unoccupied rather than crowded.
+            </p>
+          </div>
+        </section>
         <p className="mt-4 max-w-3xl text-slate-400">
           The studio designs launches; this is the other half of the loop. These are the most
           recently active Meteora Dynamic Bonding Curve pools on mainnet, read straight from the
