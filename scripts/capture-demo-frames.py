@@ -40,6 +40,13 @@ def scroll_to(pattern, block='center'):
       if (!el) return false; el.scrollIntoView({block: %s}); return true;
     })()""" % (json.dumps(pattern), json.dumps(block)))
     time.sleep(0.6)
+    # Some pages (the deployed /pools/ among them) ignore programmatic scrolling
+    # entirely — scrollIntoView reports success and scrollY stays 0. A real wheel
+    # event goes through the browser's own input path and always moves them.
+    if js("window.scrollY") == 0 and block != 'start':
+        for _ in range(8):
+            cdp("Input.dispatchMouseEvent", type="mouseWheel", x=800, y=500, deltaX=0, deltaY=420)
+            time.sleep(0.35)
     return ok
 
 def scroll_top():
@@ -115,12 +122,22 @@ shot('11-script', 'Export the create-config transaction, then simulate it on mai
 goto_url(URL + '/presets/'); wait_for_load(); time.sleep(8)
 shot('12-presets', 'A preset marketplace with measured graduation odds')
 
-# 12. live pools
+# 12. live pools — wheel down past the measurement panel so this beat shows the
+# pool list and the next beat can show the panel; otherwise both frames are the
+# same screenshot.
 goto_url(URL + '/pools/'); wait_for_load(); time.sleep(6)
+for _ in range(6):
+    cdp("Input.dispatchMouseEvent", type="mouseWheel", x=800, y=500, deltaX=0, deltaY=420)
+    time.sleep(0.4)
+time.sleep(1.5)
 shot('13-pools', 'Live mainnet DBC pools, read straight from the program')
 
-# 13. the measured distribution across a wider sample
-scroll_to('sampled launches', block='start'); time.sleep(2)
+# 13. the measured distribution across a wider sample (back to the top)
+js("window.scrollTo({top: 0})")
+for _ in range(8):
+    cdp("Input.dispatchMouseEvent", type="mouseWheel", x=800, y=500, deltaX=0, deltaY=-420)
+    time.sleep(0.3)
+time.sleep(1.5)
 shot('14-stats', '200 launches decoded: half graduate, half never clear a tenth')
 
 json.dump(beats, open(f'{OUT}/beats.json','w'), indent=1)
