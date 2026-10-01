@@ -1,0 +1,8 @@
+{
+  "markets": [],
+  "fetchedAt": null,
+  "endpoint": "live-api.panta.market",
+  "keyLabel": "none",
+  "priced": 0,
+  "note": "Empty until `PANTA_API_KEY=… npm run panta:snapshot` runs. The page says so rather than showing invented numbers."
+}

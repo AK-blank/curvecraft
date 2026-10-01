@@ -214,6 +214,17 @@ export function positionValue(position: PantaPosition, market?: PantaMarket): nu
   return shares * price;
 }
 
+/** The shape `scripts/panta-snapshot.ts` writes and the page imports. */
+export interface PantaSnapshot {
+  markets: PantaMarket[];
+  fetchedAt: string | null;
+  endpoint: string;
+  keyLabel: string;
+  /** How many rows actually carried a spot price. */
+  priced: number;
+  note?: string;
+}
+
 /** Endpoint summary for provenance lines in the UI. */
 export function pantaEndpointLabel(): string {
   return redactEndpoint(PANTA_API_BASE);
