@@ -209,6 +209,7 @@ seeing all of them:
 |---|---|---|
 | A public RPC | pools that happened to trade inside the last few blocks | public endpoints refuse `getProgramAccounts` on the program, so the reader walks recent transactions and keeps whichever accounts carry a pool discriminator |
 | [Solami](https://solami.dev) | the pools themselves | `getProgramAccountsV2` filters server-side on the discriminator and the 424-byte account size, so the enumeration is the program's live state rather than a sample of its traffic |
+| [RPC Fast](https://rpcfast.com) | the same pools, the same way | their `getProgramAccounts` refuses to return an unpaginated result set (`-32074`), and the documented way through is `getProgramAccountsPaginated` — one request per page, keys only via a zero-length `dataSlice` |
 
 The same client carries Solami's Yellowstone gRPC firehose, which can watch the
 program in real time instead of polling.
@@ -226,10 +227,17 @@ npm run dev                 # /pools shows which path produced the snapshot
 ```
 
 `SOLAMI_RPC_URL`, `RPC_FAST_URL`, `RPC_FAST_API_KEY`, `SOLANA_RPC_URL` and
-`RPC_URL` are also honoured, in that order — see
+`RPC_URL` are also honoured, in that order; `RPC_PROVIDER=solami|rpcfast|custom|public`
+overrides the order when more than one is configured. See
 [`src/core/providers.ts`](src/core/providers.ts). **With no key at all
 everything still runs**: the reader falls back to the transaction walk and the
 stream reports itself unavailable rather than pretending.
+
+```bash
+npm run pools:snapshot:solami     # force the Solami enumeration
+npm run pools:snapshot:rpcfast    # force the RPC Fast paginated enumeration
+npm run pools:snapshot:public     # force the transaction walk (no key needed)
+```
 
 Measured on 2026-10-01: the enumeration returned **576 VirtualPool accounts**
 (capped) where the transaction walk surfaced about ten. The deployed site

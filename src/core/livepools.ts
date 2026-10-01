@@ -30,6 +30,7 @@ import {
   hasSolami,
   solamiConnection,
 } from './solami-source';
+import { discoverPoolsViaRpcFast } from './rpcfast-source';
 import type { LaunchSpec } from './types';
 
 const QUOTE_DECIMALS = 9; // SOL-quoted launches dominate DBC today.
@@ -260,7 +261,10 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
   // Preferred path: ask the endpoint for the pools themselves. A filtered
   // server-side enumeration sees every live VirtualPool, not just the ones that
   // happened to trade inside our window.
-  if (hasSolami()) {
+  // The resolved provider decides the path, not whichever key happens to be in
+  // the environment: with both a Solami and an RPC Fast key configured,
+  // RPC_PROVIDER has to be able to pick one.
+  if (resolveRpcProvider().id === 'solami' && hasSolami()) {
     try {
       // The enumeration is cheap and server-side, so ask for more than the page
       // needs: a pool with no volume still belongs in the picture, and the walk
@@ -281,6 +285,22 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
       }
     } catch (error) {
       warnings.push(`Solami enumeration failed, falling back: ${(error as Error).message.slice(0, 60)}`);
+    }
+  }
+
+  // Second preference: RPC Fast's paginated enumeration. Same idea as Solami's
+  // — ask the endpoint for the pools — reached through the extension they
+  // document for exactly this wall.
+  if (poolAddresses.length === 0 && resolveRpcProvider().id === 'rpcfast') {
+    try {
+      const found = await discoverPoolsViaRpcFast({ limit: Math.max(limit * 48, 512), includeTransferHook: true });
+      poolAddresses = found.addresses;
+      scannedTransactions = found.scanned;
+      discovery =
+        `RPC Fast getProgramAccountsPaginated (${found.addresses.length} VirtualPool accounts` +
+        `${found.truncated ? ', capped' : ''})`;
+    } catch (error) {
+      warnings.push(`RPC Fast enumeration failed, falling back: ${(error as Error).message.slice(0, 60)}`);
     }
   }
 

@@ -106,3 +106,44 @@ describe('accountsFromUpdate', () => {
     expect(accountsFromUpdate(update)?.accounts).toEqual([]);
   });
 });
+
+describe('rpc fast paginated enumeration', () => {
+  it('walks pages until the endpoint stops returning a key', async () => {
+    const { fetchPoolPage } = await import('@/core/rpcfast-source');
+    const calls: Array<Record<string, unknown>> = [];
+    const fakeFetch = (async (_url: string, init: { body: string }) => {
+      const body = JSON.parse(init.body);
+      calls.push(body);
+      const key = body.params[1].paginationKey;
+      const page = key === null ? ['A', 'B'] : key === 'k1' ? ['C'] : [];
+      return {
+        text: async () =>
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: { value: { accounts: page.map((pubkey) => ({ pubkey })), paginationKey: key === null ? 'k1' : null } },
+          }),
+      };
+    }) as unknown as typeof fetch;
+
+    const first = await fetchPoolPage('https://example.invalid', POOL_DISCRIMINATOR_HEX, null, 1000, fakeFetch);
+    expect(first.accounts.map((a) => a.pubkey)).toEqual(['A', 'B']);
+    expect(first.paginationKey).toBe('k1');
+
+    const second = await fetchPoolPage('https://example.invalid', POOL_DISCRIMINATOR_HEX, 'k1', 1000, fakeFetch);
+    expect(second.accounts.map((a) => a.pubkey)).toEqual(['C']);
+    expect(second.paginationKey).toBeNull();
+
+    // the request has to ask for keys only, or we pay for state we discard
+    expect(calls[0].params[1].dataSlice).toEqual({ offset: 0, length: 0 });
+    expect(calls[0].params[1].filters).toHaveLength(2);
+  });
+
+  it('surfaces the endpoint error instead of pretending the page was empty', async () => {
+    const { fetchPoolPage } = await import('@/core/rpcfast-source');
+    const fakeFetch = (async () => ({
+      text: async () => JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32074, message: 'response exceeds an unpaginated safety limit' } }),
+    })) as unknown as typeof fetch;
+    await expect(fetchPoolPage('https://example.invalid', POOL_DISCRIMINATOR_HEX, null, 10, fakeFetch)).rejects.toThrow(/32074/);
+  });
+});
