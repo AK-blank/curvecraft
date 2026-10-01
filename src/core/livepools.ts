@@ -21,6 +21,8 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import {
   DYNAMIC_BONDING_CURVE_PROGRAM_ID,
   DynamicBondingCurveClient,
+  SECONDS_PER_DAY,
+  calculateLockedLiquidityBpsAtTime,
 } from '@meteora-ag/dynamic-bonding-curve-sdk';
 
 import { deriveSpec, toConfigParams } from './build';
@@ -83,6 +85,13 @@ export interface LivePool {
   activationPoint: number | null;
   /** A launch spec reconstructed from this pool's on-chain config. */
   design?: LaunchSpec;
+  /**
+   * Liquidity still locked one day after migration, in basis points, straight
+   * from the SDK's `calculateLockedLiquidityBpsAtTime`. The program requires at
+   * least 1000 (10%); permanently-locked percentages alone do not answer that
+   * question because vesting counts too.
+   */
+  dayOneLockedBps?: number;
 }
 
 export interface LivePoolsSnapshot {
@@ -134,7 +143,63 @@ interface ConfigState {
   creatorPermanentLockedLiquidityPercentage?: number;
   partnerLiquidityPercentage?: number;
   partnerPermanentLockedLiquidityPercentage?: number;
+  // The lock rule is about liquidity locked one day after migration, which
+  // includes vesting — a config can carry 0% permanently locked and still
+  // satisfy it. These come straight off the account; the SDK's own helper
+  // interprets them so we never re-derive the rule by hand.
+  partnerLiquidityVestingInfo?: VestingInfoState;
+  creatorLiquidityVestingInfo?: VestingInfoState;
   poolFees?: { baseFee?: { cliffFeeNumerator?: { toString(): string } } };
+}
+
+interface VestingInfoState {
+  cliffDuration?: number | { toString(): string };
+  periodFrequency?: number | { toString(): string };
+  cliffUnlockLiquidity?: { toString(): string };
+  liquidityPerPeriod?: { toString(): string };
+  numberOfPeriod?: number;
+}
+
+/**
+ * Liquidity locked one day after migration, in basis points.
+ *
+ * The permanent-locked percentages a config shows are only half the answer: the
+ * program's `MIN_LOCKED_LIQUIDITY_BPS` rule is evaluated against the locked
+ * share *including vesting*, so a launch can report 0% permanently locked and
+ * still be legal because its vesting cliff has not unlocked yet. The SDK owns
+ * that arithmetic; we hand it the account's own fields.
+ */
+function dayOneLockedBpsFrom(config: ConfigState): number | undefined {
+  try {
+    const toNumber = (value: unknown): number => {
+      if (value === undefined || value === null) return 0;
+      if (typeof value === 'number') return value;
+      if (typeof value === 'object' && 'toString' in (value as object)) {
+        return Number((value as { toString(): string }).toString());
+      }
+      return Number(value);
+    };
+    const normalise = (info?: VestingInfoState) =>
+      info
+        ? {
+            cliffDuration: toNumber(info.cliffDuration),
+            periodFrequency: toNumber(info.periodFrequency),
+            cliffUnlockLiquidity: toNumber(info.cliffUnlockLiquidity),
+            liquidityPerPeriod: toNumber(info.liquidityPerPeriod),
+            numberOfPeriod: toNumber(info.numberOfPeriod),
+          }
+        : undefined;
+    const bps = calculateLockedLiquidityBpsAtTime(
+      config.partnerPermanentLockedLiquidityPercentage ?? 0,
+      config.creatorPermanentLockedLiquidityPercentage ?? 0,
+      normalise(config.partnerLiquidityVestingInfo) as never,
+      normalise(config.creatorLiquidityVestingInfo) as never,
+      SECONDS_PER_DAY,
+    );
+    return Number.isFinite(bps) ? bps : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 const Q64 = 2 ** 64;
@@ -368,6 +433,7 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
 
     let threshold = 0;
     let design: LaunchSpec | undefined;
+    let dayOneLockedBps: number | undefined;
     try {
       const configAddress = poolState.config?.toBase58();
       if (configAddress) {
@@ -382,6 +448,7 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
             progressPct,
             liveThreshold: threshold,
           }) ?? undefined;
+        dayOneLockedBps = dayOneLockedBpsFrom(config);
       }
     } catch {
       /* the threshold is a nicety; progress falls back to zero */
@@ -397,6 +464,7 @@ export async function readLivePools(limit = 8, txWindow = 12): Promise<LivePools
       baseMint: poolState.baseMint?.toBase58() ?? 'unknown',
       creator: poolState.creator?.toBase58() ?? 'unknown',
       config: poolState.config?.toBase58() ?? 'unknown',
+      dayOneLockedBps,
       quoteReserve,
       migrationQuoteThreshold: threshold,
       progressPct: threshold > 0 ? Math.min(100, (quoteReserve / threshold) * 100) : 0,

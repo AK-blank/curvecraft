@@ -133,6 +133,59 @@ The lint now runs the SDK's own validators (`validateMinimumLockedLiquidity`, `v
 `tests/core.test.ts` asserts that every preset in the marketplace passes. A config UI cannot infer
 these rules; a launch tool that does not check them is a liability.
 
+## Finding five: real launches either graduate or die, and half of them break the lock rule
+
+The presets are opinions. This is the evidence behind them: `npm run pools:analyze` enumerates live
+VirtualPool accounts on mainnet, rebuilds each launch's config with the same decoder the studio uses,
+and reports what founders actually chose. The sample is taken in account-address order rather than by
+activity, so it is not skewed toward whoever traded last *(measured 2026-10-01, 200 pools)*:
+
+| | share / median |
+|---|---|
+| Quote asset | SOL 84.0% · USDC 16.0% · **another token 0%** |
+| Migration target | dammV2 93.5% · dammV1 6.5% |
+| Fees collected in the quote asset | 45.0% |
+| **Migration fee preset** | **600 bps on 52.5%** (100 bps 21.5%, 30 bps 14.0%, 25 bps 11.5%) |
+| Base swap fee | 25 bps (p75 100) |
+| Creator trading fee | 50% (p25 0%, p75 100%) |
+| Creator permanently locked | 0% (p75 50%) |
+| Starting market cap | $39 (p75 $170) |
+| Market cap at migration | $500 (p75 $9.0k) |
+| Raise to graduate | 83.7 quote (p75 85.0) |
+| **Graduated** | **52.0%** |
+| **Raised under 10% of target** | **48.0%** |
+| **Between 10% and 99%** | **0.0%** |
+
+Four things fall out of this.
+
+**The distribution is bimodal, not a gradient.** Half the launches graduate and half never clear 10%
+of their raise; nothing sits in between, because a curve that is not being bought does not drift
+sideways — it stops. A tool that reports a single graduation probability hides the shape of that
+risk, which is why the report shows the distribution over sampled paths rather than one number.
+
+**Half the configs on mainnet do not meet the program's own lock rule.** The program requires at
+least 1000 bps (10%) of migrated liquidity to still be locked one day after migration
+(`MIN_LOCKED_LIQUIDITY_BPS`), and 102 of the 200 decodable configs hold less — median 100 bps. The
+permanent-locked percentages alone do not answer this, because vesting counts: a config can show 0%
+permanently locked and still pass. We call the SDK's `calculateLockedLiquidityBpsAtTime` with the
+account's own vesting fields instead of re-deriving the rule. The most likely reading is that those
+configs were created before the rule was enforced and remain live; whatever the cause, it is the
+argument for a launch tool that runs the validator rather than copying the last launch that worked.
+
+**Deployed configs are still more aggressive than our presets.** The market's modal migration fee is
+600 bps, six times the 100 bps every one of our presets uses, and the median creator takes 50% of
+trading fees against our 10–30%. Those configs are optimizing the first hour of a meme; the presets
+are optimizing a launch that has to survive its own migration. But it means the preset marketplace
+should ship an explicitly degen profile rather than presenting the conservative defaults as neutral.
+
+**The pair space Meteora wants built is genuinely empty.** Across the 200 sampled pools, 84% quote
+SOL and 16% quote USDC — **not one quotes another token.** Stock pairs, ICM pairs and RWA pairs are
+not crowded categories with a few incumbents; they are unoccupied. That is the strongest argument for
+the ICM pair preset we added, and it is measured rather than assumed.
+
+Reproduce with `npm run pools:analyze` or `npm run pools:analyze 200` (needs a key that allows a
+filtered server-side enumeration — see [Reading mainnet](#reading-mainnet-the-solami-data-path)).
+
 ## Verified against the program, not just against itself
 
 Simulating a launch in a browser proves the simulator is self-consistent. To

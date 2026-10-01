@@ -15,9 +15,11 @@
     "pools:snapshot": "node --use-env-proxy --import tsx scripts/pools-snapshot.ts",
     "solami:pools": "node --use-env-proxy --import tsx scripts/solami-stream.ts pools",
     "solami:stream": "node --use-env-proxy --import tsx scripts/solami-stream.ts stream",
+    "pools:analyze": "node --use-env-proxy --import tsx scripts/analyze-launches.ts",
     "pools:snapshot:rpcfast": "RPC_PROVIDER=rpcfast node --use-env-proxy --import tsx scripts/pools-snapshot.ts",
     "pools:snapshot:solami": "RPC_PROVIDER=solami node --use-env-proxy --import tsx scripts/pools-snapshot.ts",
-    "pools:snapshot:public": "RPC_PROVIDER=public node --use-env-proxy --import tsx scripts/pools-snapshot.ts"
+    "pools:snapshot:public": "RPC_PROVIDER=public node --use-env-proxy --import tsx scripts/pools-snapshot.ts",
+    "pools:analyze:solami": "RPC_PROVIDER=solami node --use-env-proxy --import tsx scripts/analyze-launches.ts"
   },
   "dependencies": {
     "@meteora-ag/dynamic-bonding-curve-sdk": "^1.5.13",
