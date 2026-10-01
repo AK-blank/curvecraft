@@ -1,0 +1,51 @@
+[
+ {
+  "name": "00-title",
+  "video": "browser-tmp/video-pitch/00-title.mp4",
+  "audio": "browser-tmp/video-pitch/00-title.wav",
+  "hold": 11.269478,
+  "spoken": 9.669478
+ },
+ {
+  "name": "01-studio",
+  "video": "browser-tmp/video-pitch/01-studio.mp4",
+  "audio": "browser-tmp/video-pitch/01-studio.wav",
+  "hold": 11.604443999999999,
+  "spoken": 10.004444
+ },
+ {
+  "name": "08-montecarlo",
+  "video": "browser-tmp/video-pitch/08-montecarlo.mp4",
+  "audio": "browser-tmp/video-pitch/08-montecarlo.wav",
+  "hold": 19.005215,
+  "spoken": 17.405215
+ },
+ {
+  "name": "10-lint",
+  "video": "browser-tmp/video-pitch/10-lint.mp4",
+  "audio": "browser-tmp/video-pitch/10-lint.wav",
+  "hold": 14.177868,
+  "spoken": 12.577868
+ },
+ {
+  "name": "12-presets",
+  "video": "browser-tmp/video-pitch/12-presets.mp4",
+  "audio": "browser-tmp/video-pitch/12-presets.wav",
+  "hold": 20.318095000000003,
+  "spoken": 18.718095
+ },
+ {
+  "name": "14-stats",
+  "video": "browser-tmp/video-pitch/14-stats.mp4",
+  "audio": "browser-tmp/video-pitch/14-stats.wav",
+  "hold": 34.058503,
+  "spoken": 32.458503
+ },
+ {
+  "name": "15-end",
+  "video": "browser-tmp/video-pitch/15-end.mp4",
+  "audio": "browser-tmp/video-pitch/15-end.wav",
+  "hold": 9.992063,
+  "spoken": 8.392063
+ }
+]

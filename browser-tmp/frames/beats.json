@@ -1,0 +1,58 @@
+[
+ {
+  "name": "01-studio",
+  "caption": "Compiled into a real Meteora DBC config with the official SDK"
+ },
+ {
+  "name": "02-double",
+  "caption": "Doubling the graduation target costs only 1.5x the raise"
+ },
+ {
+  "name": "03-flat",
+  "caption": "A flat curve reaches the same valuation with 27% less capital"
+ },
+ {
+  "name": "04-fees",
+  "caption": "Meme Speedrun: 20% fee decaying to 1% in thirty minutes"
+ },
+ {
+  "name": "05-sniper",
+  "caption": "Sixty bots in the first ten seconds, then organic demand"
+ },
+ {
+  "name": "06-whale",
+  "caption": "A whale takes a position, then dumps into the curve"
+ },
+ {
+  "name": "07-scoreboard",
+  "caption": "The sniper premium: what each demand pattern really pays"
+ },
+ {
+  "name": "08-montecarlo",
+  "caption": "200 sampled demand paths give a graduation probability"
+ },
+ {
+  "name": "09-compare",
+  "caption": "The same demand replayed against every design you selected"
+ },
+ {
+  "name": "10-lint",
+  "caption": "Every program rule checked before you deploy"
+ },
+ {
+  "name": "11-script",
+  "caption": "Export the create-config transaction, then simulate it on mainnet"
+ },
+ {
+  "name": "12-presets",
+  "caption": "A preset marketplace with measured graduation odds"
+ },
+ {
+  "name": "13-pools",
+  "caption": "Live mainnet DBC pools, read straight from the program"
+ },
+ {
+  "name": "14-stats",
+  "caption": "200 launches decoded: half graduate, half never clear a tenth"
+ }
+]

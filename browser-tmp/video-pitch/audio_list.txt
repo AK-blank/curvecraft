@@ -1,0 +1,7 @@
+file '/Users/kkkk/Downloads/browser_dsh/curvecraft/browser-tmp/video-pitch/00-title.wav'
+file '/Users/kkkk/Downloads/browser_dsh/curvecraft/browser-tmp/video-pitch/01-studio.wav'
+file '/Users/kkkk/Downloads/browser_dsh/curvecraft/browser-tmp/video-pitch/08-montecarlo.wav'
+file '/Users/kkkk/Downloads/browser_dsh/curvecraft/browser-tmp/video-pitch/10-lint.wav'
+file '/Users/kkkk/Downloads/browser_dsh/curvecraft/browser-tmp/video-pitch/12-presets.wav'
+file '/Users/kkkk/Downloads/browser_dsh/curvecraft/browser-tmp/video-pitch/14-stats.wav'
+file '/Users/kkkk/Downloads/browser_dsh/curvecraft/browser-tmp/video-pitch/15-end.wav'

@@ -1,0 +1,114 @@
+[
+ {
+  "name": "00-title",
+  "video": "browser-tmp/video/00-title.mp4",
+  "audio": "browser-tmp/video/00-title.wav",
+  "hold": 11.269478,
+  "spoken": 9.669478
+ },
+ {
+  "name": "01-studio",
+  "video": "browser-tmp/video/01-studio.mp4",
+  "audio": "browser-tmp/video/01-studio.wav",
+  "hold": 11.604443999999999,
+  "spoken": 10.004444
+ },
+ {
+  "name": "02-double",
+  "video": "browser-tmp/video/02-double.mp4",
+  "audio": "browser-tmp/video/02-double.wav",
+  "hold": 12.706667,
+  "spoken": 11.106667
+ },
+ {
+  "name": "03-flat",
+  "video": "browser-tmp/video/03-flat.mp4",
+  "audio": "browser-tmp/video/03-flat.wav",
+  "hold": 13.126757,
+  "spoken": 11.526757
+ },
+ {
+  "name": "04-fees",
+  "video": "browser-tmp/video/04-fees.mp4",
+  "audio": "browser-tmp/video/04-fees.wav",
+  "hold": 8.363628,
+  "spoken": 6.763628
+ },
+ {
+  "name": "05-sniper",
+  "video": "browser-tmp/video/05-sniper.mp4",
+  "audio": "browser-tmp/video/05-sniper.wav",
+  "hold": 11.269161,
+  "spoken": 9.669161
+ },
+ {
+  "name": "06-whale",
+  "video": "browser-tmp/video/06-whale.mp4",
+  "audio": "browser-tmp/video/06-whale.wav",
+  "hold": 6.0,
+  "spoken": 3.617415
+ },
+ {
+  "name": "07-scoreboard",
+  "video": "browser-tmp/video/07-scoreboard.mp4",
+  "audio": "browser-tmp/video/07-scoreboard.wav",
+  "hold": 19.842041000000002,
+  "spoken": 18.242041
+ },
+ {
+  "name": "08-montecarlo",
+  "video": "browser-tmp/video/08-montecarlo.mp4",
+  "audio": "browser-tmp/video/08-montecarlo.wav",
+  "hold": 19.005215,
+  "spoken": 17.405215
+ },
+ {
+  "name": "09-compare",
+  "video": "browser-tmp/video/09-compare.mp4",
+  "audio": "browser-tmp/video/09-compare.wav",
+  "hold": 12.29678,
+  "spoken": 10.69678
+ },
+ {
+  "name": "10-lint",
+  "video": "browser-tmp/video/10-lint.mp4",
+  "audio": "browser-tmp/video/10-lint.wav",
+  "hold": 14.177868,
+  "spoken": 12.577868
+ },
+ {
+  "name": "11-script",
+  "video": "browser-tmp/video/11-script.mp4",
+  "audio": "browser-tmp/video/11-script.wav",
+  "hold": 10.387347,
+  "spoken": 8.787347
+ },
+ {
+  "name": "12-presets",
+  "video": "browser-tmp/video/12-presets.mp4",
+  "audio": "browser-tmp/video/12-presets.wav",
+  "hold": 20.318095000000003,
+  "spoken": 18.718095
+ },
+ {
+  "name": "13-pools",
+  "video": "browser-tmp/video/13-pools.mp4",
+  "audio": "browser-tmp/video/13-pools.wav",
+  "hold": 8.318594000000001,
+  "spoken": 6.718594
+ },
+ {
+  "name": "14-stats",
+  "video": "browser-tmp/video/14-stats.mp4",
+  "audio": "browser-tmp/video/14-stats.wav",
+  "hold": 34.058503,
+  "spoken": 32.458503
+ },
+ {
+  "name": "15-end",
+  "video": "browser-tmp/video/15-end.mp4",
+  "audio": "browser-tmp/video/15-end.wav",
+  "hold": 9.992063,
+  "spoken": 8.392063
+ }
+]

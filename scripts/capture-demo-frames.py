@@ -119,5 +119,9 @@ shot('12-presets', 'A preset marketplace with measured graduation odds')
 goto_url(URL + '/pools/'); wait_for_load(); time.sleep(6)
 shot('13-pools', 'Live mainnet DBC pools, read straight from the program')
 
+# 13. the measured distribution across a wider sample
+scroll_to('sampled launches', block='start'); time.sleep(2)
+shot('14-stats', '200 launches decoded: half graduate, half never clear a tenth')
+
 json.dump(beats, open(f'{OUT}/beats.json','w'), indent=1)
 print('total beats:', len(beats))

@@ -17,8 +17,11 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 FRAMES = os.environ.get('FRAMES', 'browser-tmp/frames')
-BUILD = os.environ.get('BUILD', 'browser-tmp/video')
-OUT = os.environ.get('OUT', 'docs/demo.mp4')
+# Two cuts share one set of captured frames: the full walkthrough, and a short
+# pitch that leads with the measurement. `CUT=pitch` selects the subset.
+CUT = os.environ.get('CUT', 'demo')
+BUILD = os.environ.get('BUILD', f'browser-tmp/video-{CUT}')
+OUT = os.environ.get('OUT', 'docs/pitch.mp4' if CUT == 'pitch' else 'docs/demo.mp4')
 VOICE = os.environ.get('VOICE', 'Samantha')
 RATE = os.environ.get('RATE', '178')
 FONT = '/System/Library/Fonts/Supplemental/Arial.ttf'
@@ -49,13 +52,20 @@ BEATS = [
      "Before anything is exported, every design is checked against the program's own rules. That check caught a real bug: our own presets used a hundred percent liquid split, which throws inside create-config at deploy time."),
     ('11-script', '11-script', 'Export a runnable launch script, verified on mainnet', None,
      "The export is a runnable launch script. We simulated that exact transaction against mainnet: the program logs CreateConfig, and returns no error."),
-    ('12-presets', '12-presets', 'Preset marketplace with measured graduation odds', None,
-     "There is a preset marketplace with measured graduation odds, so you fork a starting point instead of a blank page."),
+    ('12-presets', '12-presets', 'Nine presets across asset classes, including an ICM pair', None,
+     "There is a preset marketplace with measured graduation odds, so you fork a starting point instead of a blank page. Nine designs now, across community tokens, memes, stablecoins, tokenized equity, RWA, agent tokens, and an ICM pair quoted in another community token."),
     ('13-pools', '13-pools', 'Live mainnet DBC pools, read from the program', None,
      "And a live view of the pools actually launching on mainnet right now, showing each raise against its graduation threshold."),
-    ('14-end', None, 'CurveCraft', 'Live demo: ak-blank.github.io/curvecraft  ·  github.com/AK-blank/curvecraft',
+    ('14-stats', '14-stats', 'Half graduate, half never clear a tenth of their raise', None,
+     "The presets are calibrated against measurement, not taste. We decoded two hundred live launches from their own configs, in account-address order so the sample is not skewed toward whoever traded last. Fifty-two percent graduated. Forty-eight percent never cleared a tenth of their raise. Nothing sat in between, because a curve nobody is buying does not drift sideways — it stops. And fifty-one percent of those configs hold less liquidity at day one than the program requires, which is why the launch check runs the program's own validator instead of trusting precedent."),
+    ('15-end', None, 'CurveCraft', 'Live demo: ak-blank.github.io/curvecraft  ·  github.com/AK-blank/curvecraft',
      "CurveCraft. Design, simulate and ship token launches on Meteora's Dynamic Bonding Curve. The live demo and the source are in the description."),
 ]
+
+# The pitch cut: what it does, why the numbers are measured, and the finding.
+PITCH_BEATS = {'00-title', '01-studio', '08-montecarlo', '10-lint', '12-presets', '14-stats', '15-end'}
+if CUT == 'pitch':
+    BEATS = [beat for beat in BEATS if beat[0] in PITCH_BEATS]
 
 
 def run(cmd):
