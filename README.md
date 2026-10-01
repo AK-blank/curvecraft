@@ -297,6 +297,30 @@ Measured on 2026-10-01: the enumeration returned **576 VirtualPool accounts**
 records which path built its snapshot — see
 <https://ak-blank.github.io/curvecraft/pools/>.
 
+## Prediction markets: the Panta data path
+
+A launch design is a bet. CurveCraft already prices that bet — graduation odds across sampled demand
+paths — but the number has been a private opinion: the founder sees it, nobody can act on it. Panta
+runs USDC prediction markets on Solana and exposes the whole flow as an API, so the same view can be
+expressed as a market.
+
+`src/core/panta-source.ts` is the read side: the market catalog, spot prices as implied
+probabilities, and wallet positions valued the way the API documents them (spot while a market is
+open, a dollar a share once it resolves). Creating a market or buying a side needs a wallet
+signature — Panta builds the unsigned transaction and never holds keys — so those paths stay in the
+UI where the user signs.
+
+The key is server-only. `npm run panta:snapshot` writes `src/data/panta-markets.json` at build time
+and the site imports that, so a credential never reaches a browser bundle.
+
+```bash
+# https://docs.panta.market/quickstart — register, mint a key, then:
+PANTA_API_KEY=pk_test_… npm run panta:snapshot
+```
+
+Attribution is a condition of the API terms: wherever these numbers appear, the UI says
+**Powered by Panta**.
+
 ## Project layout
 
 ```
